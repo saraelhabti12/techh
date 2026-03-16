@@ -2,7 +2,7 @@ import React, { useEffect, useState, useCallback } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { getMyReservations, cancelReservation as cancelReservationApi } from '../api/authApi';
 import DashboardLayout from '../components/Dashboard/DashboardLayout';
-import { FaCalendarAlt, FaClock, FaTag, FaDollarSign, FaCreditCard, FaImage, FaDownload, FaTimesCircle } from 'react-icons/fa';
+import { FaCalendarAlt, FaClock, FaTag, FaMoneyBillWave, FaTools, FaDownload, FaTimesCircle, FaArrowLeft } from 'react-icons/fa';
 
 const ReservationDetailsPage = () => {
     const { bookingReference } = useParams();
@@ -14,12 +14,11 @@ const ReservationDetailsPage = () => {
     const fetchReservationDetails = useCallback(async () => {
         try {
             setLoading(true);
-            const response = await getMyReservations(); // Assuming this returns all reservations
+            const response = await getMyReservations();
             const foundReservation = response.data.find(res => res.booking_reference === bookingReference);
 
             if (foundReservation) {
                 setReservation(foundReservation);
-                setError('');
             } else {
                 setError('Reservation not found.');
             }
@@ -34,100 +33,91 @@ const ReservationDetailsPage = () => {
         fetchReservationDetails();
     }, [fetchReservationDetails]);
 
-    const handleCancelReservation = async () => {
+    const handleCancel = async () => {
         if (window.confirm('Are you sure you want to cancel this reservation?')) {
             try {
                 await cancelReservationApi(bookingReference);
                 alert('Reservation cancelled successfully!');
-                navigate('/dashboard'); // Go back to dashboard after cancelling
+                navigate('/dashboard');
             } catch (err) {
-                setError(err.message || 'Failed to cancel reservation.');
+                alert(err.message || 'Failed to cancel reservation.');
             }
         }
     };
 
-    const handleDownloadInvoice = () => {
-        alert('Downloading invoice... (Not implemented)');
-        // In a real application, this would trigger an API call to get the invoice PDF/data
-    };
-
-    if (loading) {
-        return (
-            <DashboardLayout>
-                <div>
-                    <p>Loading reservation details...</p>
-                </div>
-            </DashboardLayout>
-        );
-    }
-
-    if (error) {
-        return (
-            <DashboardLayout>
-                <div>
-                    <p>{error}</p>
-                </div>
-            </DashboardLayout>
-        );
-    }
-
-    if (!reservation) {
-        return (
-            <DashboardLayout>
-                <div>
-                    <p>No reservation details available.</p>
-                </div>
-            </DashboardLayout>
-        );
-    }
-
-    const isCancellable = reservation.status !== 'cancelled'; // Simple logic for now
+    if (loading) return <DashboardLayout><div className="spinner spinner-purple" style={{ margin: '4rem auto' }}></div></DashboardLayout>;
+    if (error || !reservation) return <DashboardLayout><div className="empty-state"><h4>{error || 'Not found'}</h4><button onClick={() => navigate('/dashboard')} className="btn btn-primary btn-md">Back to Dashboard</button></div></DashboardLayout>;
 
     return (
         <DashboardLayout>
-            <div>
-                <h2>Reservation Details</h2>
+            <div className="animate-fadeIn">
+                <button onClick={() => navigate(-1)} className="btn btn-ghost btn-sm" style={{ marginBottom: '1.5rem' }}>
+                    <FaArrowLeft /> Back
+                </button>
 
-                {reservation.studio_image && (
+                <div className="welcome-header">
                     <div>
-                        <img src={reservation.studio_image} alt={reservation.studio} />
+                        <h2 className="heading-md">Reservation Details</h2>
+                        <p>Reference: <span style={{ fontWeight: 600, color: 'var(--gray-900)' }}>{reservation.booking_reference}</span></p>
                     </div>
-                )}
-
-                <div>
-                    <p><FaImage /> <span>Studio Name:</span> {reservation.studio}</p>
-                    <p><FaTag /> <span>Booking Reference:</span> {reservation.booking_reference}</p>
-                    <p><FaCalendarAlt /> <span>Date:</span> {reservation.date}</p>
-                    <p><FaClock /> <span>Time:</span> {reservation.time_slot}</p>
-                    {reservation.total_price && <p><FaDollarSign /> <span>Total Price:</span> ${reservation.total_price}</p>}
-                    {reservation.equipment && <p><FaCreditCard /> <span>Selected Equipment:</span> {reservation.equipment}</p>}
-                    <p>
-                        <span>Status:</span>
-                        <span className={`inline-flex items-center px-3 py-1 rounded-full text-sm font-medium ${
-                            reservation.status === 'confirmed' ? 'bg-green-100 text-green-800' :
-                            reservation.status === 'pending' ? 'bg-yellow-100 text-yellow-800' :
-                            'bg-red-100 text-red-800'
-                        }`}>
-                            {reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1)}
-                        </span>
-                    </p>
+                    <div className="welcome-actions">
+                        <button onClick={() => alert('Invoice feature coming soon!')} className="btn btn-outline btn-md">
+                            <FaDownload /> Download Invoice
+                        </button>
+                        {reservation.status !== 'cancelled' && (
+                            <button onClick={handleCancel} className="btn btn-soft btn-md" style={{ color: 'var(--reserved)', borderColor: 'var(--reserved-border)' }}>
+                                <FaTimesCircle /> Cancel Booking
+                            </button>
+                        )}
+                    </div>
                 </div>
 
-                <div>
-                    <button
-                        onClick={handleDownloadInvoice}
-                       
-                    >
-                        <FaDownload /> Download Invoice
-                    </button>
-                    {isCancellable && (
-                        <button
-                            onClick={handleCancelReservation}
-                           
-                        >
-                            <FaTimesCircle /> Cancel Booking
-                        </button>
-                    )}
+                <div className="profile-container">
+                    <div className="card" style={{ overflow: 'hidden' }}>
+                        <img 
+                            src={reservation.studio_image || 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600&q=75'} 
+                            alt={reservation.studio} 
+                            style={{ width: '100%', height: '240px', objectFit: 'cover' }}
+                        />
+                        <div style={{ padding: '2rem' }}>
+                            <h3 className="heading-md" style={{ marginBottom: '1rem' }}>{reservation.studio}</h3>
+                            <span className={`res-status-badge ${reservation.status}`}>
+                                {reservation.status}
+                            </span>
+                        </div>
+                    </div>
+
+                    <div className="card" style={{ padding: '2.5rem' }}>
+                        <div className="section-title">
+                            <h4>Booking Information</h4>
+                        </div>
+
+                        <div className="profile-fields">
+                            <div className="profile-field-group">
+                                <span className="profile-label">Date & Time</span>
+                                <span className="profile-value">
+                                    <FaCalendarAlt /> {reservation.date}
+                                </span>
+                                <span className="profile-value" style={{ marginTop: '0.25rem' }}>
+                                    <FaClock /> {reservation.time_slot}
+                                </span>
+                            </div>
+
+                            <div className="profile-field-group">
+                                <span className="profile-label">Total Amount</span>
+                                <span className="profile-value">
+                                    <FaMoneyBillWave /> MAD {reservation.total_price || reservation.price || '---'}
+                                </span>
+                            </div>
+
+                            <div className="profile-field-group">
+                                <span className="profile-label">Equipment & Services</span>
+                                <span className="profile-value">
+                                    <FaTools /> {reservation.equipment || 'No extra equipment selected'}
+                                </span>
+                            </div>
+                        </div>
+                    </div>
                 </div>
             </div>
         </DashboardLayout>

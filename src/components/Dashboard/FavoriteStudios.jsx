@@ -1,75 +1,76 @@
 import React, { useState, useEffect } from 'react';
-import { FaHeart, FaCalendarPlus } from 'react-icons/fa';
-import { Link } from 'react-router-dom';
+import { FaHeart, FaCalendarPlus, FaMapMarkerAlt } from 'react-icons/fa';
+import { useNavigate } from 'react-router-dom';
 import EmptyState from './EmptyState';
 
 const FavoriteStudios = () => {
-    // In a real application, this would come from a user API or a dedicated favorites API
+    const navigate = useNavigate();
     const [favoriteStudios, setFavoriteStudios] = useState([]);
 
     useEffect(() => {
-        // Simulate fetching favorite studios from local storage or a mock API
         const storedFavorites = JSON.parse(localStorage.getItem('favoriteStudios')) || [];
         if (storedFavorites.length === 0) {
-            // Add some mock data if no favorites are stored
             const mockFavorites = [
                 {
-                    id: 'studio-1',
-                    name: 'Creative Hub Studio',
-                    image: 'https://via.placeholder.com/300x200?text=Creative+Hub', // Placeholder image
-                    location: 'Downtown',
+                    id: 1,
+                    name: 'The White Loft',
+                    image: 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600&q=75',
+                    location: 'Downtown Tangier',
                 },
                 {
-                    id: 'studio-2',
-                    name: 'Sound Wave Studio',
-                    image: 'https://via.placeholder.com/300x200?text=Sound+Wave', // Placeholder image
-                    location: 'Midtown',
+                    id: 2,
+                    name: 'Urban Soundstage',
+                    image: 'https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=500&q=75',
+                    location: 'Malabata District',
                 },
             ];
             setFavoriteStudios(mockFavorites);
-            localStorage.setItem('favoriteStudios', JSON.stringify(mockFavorites));
         } else {
             setFavoriteStudios(storedFavorites);
         }
     }, []);
 
-    const handleBookAgain = (studioId) => {
-        // This would navigate to the studio's booking page
-        alert(`Navigating to book studio: ${studioId}`);
-        // Example: navigate(`/studios/${studioId}/book`);
-    };
-
     return (
-        <div>
-            <h3>Your Favorite Studios</h3>
+        <section style={{ marginBottom: '3.5rem' }}>
+            <div className="section-title">
+                <h3>Favorite Studios</h3>
+            </div>
+            
             {favoriteStudios.length === 0 ? (
                 <EmptyState
-                    message="You haven't favorited any studios yet."
-                    description="Browse our studios and add your favorites to quickly book them later!"
-                    buttonText="Browse Studios"
-                    buttonLink="/studios"
+                    message="No favorites yet"
+                    description="Tap the heart icon on any studio to save it here for quick access."
+                    buttonText="Explore Studios"
+                    buttonLink="/"
                     icon={FaHeart}
                 />
             ) : (
-                <div>
+                <div className="favorites-grid">
                     {favoriteStudios.map((studio) => (
-                        <div key={studio.id}>
-                            <img src={studio.image} alt={studio.name} />
-                            <div>
-                                <h4>{studio.name}</h4>
-                                <p>{studio.location}</p>
-                                <button
-                                    onClick={() => handleBookAgain(studio.id)}
-                                   
-                                >
-                                    <FaCalendarPlus /> Book Again
-                                </button>
+                        <div key={studio.id} className="studio-card animate-fadeUp">
+                            <div className="studio-card-img-wrapper" style={{ height: '180px' }}>
+                                <img src={studio.image} alt={studio.name} className="studio-card-img" />
+                            </div>
+                            <div className="studio-card-content">
+                                <h4 className="studio-card-title">{studio.name}</h4>
+                                <p className="studio-card-tagline" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    <FaMapMarkerAlt /> {studio.location}
+                                </p>
+                                <div className="studio-card-footer" style={{ borderTop: 'none', paddingTop: '0', marginTop: '1rem' }}>
+                                    <button
+                                        onClick={() => navigate('/reserve-studio', { state: { preselectedStudio: studio.id } })}
+                                        className="btn btn-primary btn-sm"
+                                        style={{ width: '100%' }}
+                                    >
+                                        <FaCalendarPlus /> Book Again
+                                    </button>
+                                </div>
                             </div>
                         </div>
                     ))}
                 </div>
             )}
-        </div>
+        </section>
     );
 };
 

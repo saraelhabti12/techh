@@ -1,43 +1,39 @@
 import React from 'react';
-import { FaBell } from 'react-icons/fa';
+import { FaBell, FaCheckCircle, FaInfoCircle, FaExclamationTriangle } from 'react-icons/fa';
 
 const NotificationsPanel = () => {
-    // Simulate notifications for now
     const notifications = [
-        { id: 1, message: 'Your reservation tomorrow at 14:00 for Creative Hub Studio.', type: 'info', time: '2 hours ago' },
-        { id: 2, message: 'Booking confirmed for March 20 at Sound Wave Studio.', type: 'success', time: '1 day ago' },
-        { id: 3, message: 'Upcoming maintenance on March 25. Services may be affected.', type: 'warning', time: '3 days ago' },
+        { id: 1, message: 'Your reservation tomorrow at 14:00 for The White Loft.', type: 'info', time: '2 hours ago', icon: <FaInfoCircle /> },
+        { id: 2, message: 'Booking confirmed for March 20 at Urban Soundstage.', type: 'success', time: '1 day ago', icon: <FaCheckCircle /> },
+        { id: 3, message: 'New equipment added to Studio A: 8K Cinema Camera.', type: 'info', time: '3 days ago', icon: <FaInfoCircle /> },
     ];
 
     return (
-        <div>
-            <div>
-                <FaBell />
-                <h3>Notifications</h3>
+        <section>
+            <div className="section-title">
+                <h3>Recent Notifications</h3>
             </div>
 
-            {notifications.length === 0 ? (
-                <div>
-                    <p>No new notifications.</p>
-                </div>
-            ) : (
-                <div>
-                    {notifications.map((notification) => (
-                        <div
-                            key={notification.id}
-                            className={`p-4 rounded-md border ${
-                                notification.type === 'info' ? 'bg-blue-50 border-blue-200 text-blue-800' :
-                                notification.type === 'success' ? 'bg-green-50 border-green-200 text-green-800' :
-                                'bg-yellow-50 border-yellow-200 text-yellow-800'
-                            }`}
-                        >
-                            <p>{notification.message}</p>
-                            <p>{notification.time}</p>
+            <div className="notifications-list animate-fadeUp">
+                {notifications.length === 0 ? (
+                    <div style={{ padding: '2rem', textAlign: 'center', color: 'var(--gray-400)' }}>
+                        <p>No new notifications.</p>
+                    </div>
+                ) : (
+                    notifications.map((notification) => (
+                        <div key={notification.id} className="notification-item">
+                            <div className={`notification-icon ${notification.type}`}>
+                                {notification.icon}
+                            </div>
+                            <div className="notification-content">
+                                <p>{notification.message}</p>
+                                <span className="notification-time">{notification.time}</span>
+                            </div>
                         </div>
-                    ))}
-                </div>
-            )}
-        </div>
+                    ))
+                )}
+            </div>
+        </section>
     );
 };
 

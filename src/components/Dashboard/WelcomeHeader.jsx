@@ -1,35 +1,28 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
+import { FaPlus, FaUserEdit } from 'react-icons/fa';
 
 const WelcomeHeader = ({ userName }) => {
     const navigate = useNavigate();
 
-    const handleReserveStudio = () => {
-        navigate('/reserve-studio'); // Updated to new route for consistency
-    };
-
-    const handleEditProfile = () => {
-        navigate('/dashboard/profile');
-    };
-
     return (
-        <div className="welcome-header">
+        <div className="welcome-header animate-fadeIn">
             <div>
-                <h2>Welcome, {userName}!</h2>
-                <p>Manage your studio bookings and account.</p>
+                <h2>Welcome, {userName || 'Creative'}!</h2>
+                <p>Manage your studio bookings and account effortlessly.</p>
             </div>
             <div className="welcome-actions">
                 <button
-                    onClick={handleReserveStudio}
-                   
+                    onClick={() => navigate('/reserve-studio')}
+                    className="btn btn-primary btn-md"
                 >
-                    Reserve Studio
+                    <FaPlus /> Reserve Studio
                 </button>
                 <button
-                    onClick={handleEditProfile}
-                   
+                    onClick={() => navigate('/dashboard/profile')}
+                    className="btn btn-outline btn-md"
                 >
-                    Edit Profile
+                    <FaUserEdit /> Edit Profile
                 </button>
             </div>
         </div>

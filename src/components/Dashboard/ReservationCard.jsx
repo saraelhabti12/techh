@@ -1,52 +1,56 @@
 import React from 'react';
-import { FaCalendarAlt, FaClock, FaTag, FaInfoCircle, FaTimesCircle } from 'react-icons/fa';
+import { FaCalendarAlt, FaClock, FaTag, FaChevronRight, FaTimesCircle } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
 
 const ReservationCard = ({ reservation, onCancel, type }) => {
-    const getStatusClasses = (status) => {
-        switch (status) {
-            case 'confirmed':
-                return 'bg-green-100 text-green-800';
-            case 'pending':
-                return 'bg-yellow-100 text-yellow-800';
-            case 'cancelled':
-                return 'bg-red-100 text-red-800';
-            default:
-                return 'bg-gray-100 text-gray-800';
-        }
-    };
-
     return (
-        <div>
-            {reservation.studio_image && (
-                <img src={reservation.studio_image} alt={reservation.studio} />
-            )}
-            <div>
-                <h4>{reservation.studio}</h4>
-                <div>
-                    <p><FaCalendarAlt /> {reservation.date}</p>
-                    <p><FaClock /> {reservation.time_slot}</p>
-                    <p><FaTag /> Ref: {reservation.booking_reference}</p>
-                    <span className={`inline-flex items-center px-3 py-0.5 rounded-full text-sm font-medium ${getStatusClasses(reservation.status)}`}>
-                        {reservation.status.charAt(0).toUpperCase() + reservation.status.slice(1)}
+        <div className="reservation-card animate-fadeUp">
+            <div className="res-img-wrapper">
+                <img 
+                    src={reservation.studio_image || 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600&q=75'} 
+                    alt={reservation.studio} 
+                    className="res-img"
+                />
+            </div>
+            
+            <div className="res-content">
+                <div className="res-header">
+                    <h4 className="res-title">{reservation.studio}</h4>
+                    <span className={`res-status-badge ${reservation.status}`}>
+                        {reservation.status}
                     </span>
                 </div>
-                <div>
-                    <Link
-                        to={`/dashboard/reservations/${reservation.booking_reference}`}
-                       
-                    >
-                        <FaInfoCircle /> View Details
-                    </Link>
-                    {type === 'upcoming' && reservation.status === 'pending' && (
-                        <button
-                            onClick={() => onCancel(reservation.booking_reference)}
-                           
-                        >
-                            <FaTimesCircle /> Cancel
-                        </button>
-                    )}
+                
+                <div className="res-details-row">
+                    <div className="res-detail-item">
+                        <FaCalendarAlt /> {reservation.date}
+                    </div>
+                    <div className="res-detail-item">
+                        <FaClock /> {reservation.time_slot}
+                    </div>
+                    <div className="res-detail-item">
+                        <FaTag /> {reservation.booking_reference}
+                    </div>
                 </div>
+            </div>
+
+            <div className="res-actions">
+                <Link
+                    to={`/dashboard/reservations/${reservation.booking_reference}`}
+                    className="btn btn-soft btn-sm"
+                >
+                    Details <FaChevronRight />
+                </Link>
+                
+                {type === 'upcoming' && reservation.status === 'pending' && (
+                    <button
+                        onClick={() => onCancel(reservation.booking_reference)}
+                        className="btn btn-ghost btn-sm"
+                        style={{ color: 'var(--reserved)' }}
+                    >
+                        <FaTimesCircle /> Cancel
+                    </button>
+                )}
             </div>
         </div>
     );

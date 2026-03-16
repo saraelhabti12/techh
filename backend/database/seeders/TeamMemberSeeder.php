@@ -4,6 +4,11 @@ namespace Database\Seeders;
 
 use App\Models\TeamMember;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
+
+
+
+DB::table('team_members')->truncate();
 
 class TeamMemberSeeder extends Seeder
 {

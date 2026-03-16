@@ -1,7 +1,7 @@
 import React from 'react';
-import { useNavigate, Link } from 'react-router-dom';
+import { useNavigate, NavLink } from 'react-router-dom';
 import { useAuth } from '../../App';
-import { FaUser, FaCalendarAlt, FaStar, FaBell, FaSignOutAlt, FaPlusSquare } from 'react-icons/fa'; // Import icons
+import { FaUser, FaCalendarAlt, FaStar, FaBell, FaSignOutAlt, FaPlusSquare, FaThLarge } from 'react-icons/fa';
 
 const DashboardLayout = ({ children }) => {
     const { user, loading, logoutUser } = useAuth();
@@ -9,8 +9,8 @@ const DashboardLayout = ({ children }) => {
 
     if (loading) {
         return (
-            <div>
-                <p>Loading user data...</p>
+            <div className="flex items-center justify-center min-h-screen">
+                <div className="spinner spinner-purple"></div>
             </div>
         );
     }
@@ -29,45 +29,45 @@ const DashboardLayout = ({ children }) => {
         <div className="main-dashboard-layout">
             {/* Sidebar Navigation */}
             <aside className="sidebar">
-                <div>TechStudio</div>
+                <div className="sidebar-brand">
+                    <div className="sidebar-brand-icon">✦</div>
+                    <span>TechStudio</span>
+                </div>
+                
                 <nav>
                     <ul>
                         <li>
-                            <Link to="/dashboard">
-                                <FaCalendarAlt /> Dashboard
-                            </Link>
+                            <NavLink to="/dashboard" end className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
+                                <FaThLarge /> Dashboard
+                            </NavLink>
                         </li>
                         <li>
-                            <Link to="/dashboard/profile">
+                            <NavLink to="/dashboard/profile" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
                                 <FaUser /> Profile
-                            </Link>
+                            </NavLink>
                         </li>
                         <li>
-                            <Link to="/dashboard/favorites">
+                            <NavLink to="/dashboard/favorites" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
                                 <FaStar /> Favorites
-                            </Link>
+                            </NavLink>
                         </li>
                         <li>
-                            <Link to="/dashboard/notifications">
+                            <NavLink to="/dashboard/notifications" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
                                 <FaBell /> Notifications
-                            </Link>
-                        </li>
-                        <li>
-                            <Link to="/reserve-studio">
-                                <FaPlusSquare /> Reserve Studio
-                            </Link>
-                        </li>
-                        <li>
-                            <button onClick={handleLogout}>
-                                <FaSignOutAlt /> Logout
-                            </button>
+                            </NavLink>
                         </li>
                     </ul>
                 </nav>
+
+                <div className="sidebar-footer">
+                    <button onClick={handleLogout} className="logout-btn">
+                        <FaSignOutAlt /> Logout
+                    </button>
+                </div>
             </aside>
 
             {/* Main Content Area */}
-            <main>
+            <main className="dashboard-main">
                 {children}
             </main>
         </div>

@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, useNavigate } from "react-router-dom";
+import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../App"; // Import useAuth context
 
 /**
@@ -44,7 +44,7 @@ export default function Navbar({ onBook }) {
     <>
       <header className={`navbar-wrapper ${scrolled ? 'scrolled' : ''}`}>
         <div
-         
+          className="container"
           style={{
             height: 72, display: "flex",
             alignItems: "center", justifyContent: "space-between",
@@ -59,39 +59,39 @@ export default function Navbar({ onBook }) {
           {/* Desktop nav */}
           <nav style={{ display: "flex", alignItems: "center", gap: "1.5rem" }} className="nav-desktop">
             {publicLinks.map(({ to, label }) => (
-              <Link
+              <NavLink
                 key={to}
                 to={to}
                 onClick={() => handleNavLinkClick()}
-                className="nav-link"
+                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
               >
                 {label}
-              </Link>
+              </NavLink>
             ))}
             {isAuthenticated ? (
               <>
                 {authLinks.map(({ to, label, action }) => (
-                  <Link
+                  <NavLink
                     key={to}
                     to={to}
                     onClick={() => handleNavLinkClick(action)}
-                    className="nav-link"
+                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                   >
                     {label}
-                  </Link>
+                  </NavLink>
                 ))}
               </>
             ) : (
               <>
                 {guestLinks.map(({ to, label }) => (
-                  <Link
+                  <NavLink
                     key={to}
                     to={to}
                     onClick={() => handleNavLinkClick()}
-                    className="nav-link"
+                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
                   >
                     {label}
-                  </Link>
+                  </NavLink>
                 ))}
               </>
             )}
@@ -147,39 +147,39 @@ export default function Navbar({ onBook }) {
         >
           <div className="nav-mobile-menu">
             {publicLinks.map(({ to, label }) => (
-              <Link 
+              <NavLink 
                 key={to} 
                 to={to}
-                className="nav-mobile-link"
+                className={({ isActive }) => `nav-mobile-link ${isActive ? 'active' : ''}`}
                 onClick={() => handleNavLinkClick()}
               >
                 {label}
-              </Link>
+              </NavLink>
             ))}
             {isAuthenticated ? (
               <>
                 {authLinks.map(({ to, label, action }) => (
-                  <Link
+                  <NavLink
                     key={to}
                     to={to}
                     onClick={() => handleNavLinkClick(action)}
-                    className="nav-mobile-link"
+                    className={({ isActive }) => `nav-mobile-link ${isActive ? 'active' : ''}`}
                   >
                     {label}
-                  </Link>
+                  </NavLink>
                 ))}
               </>
             ) : (
               <>
                 {guestLinks.map(({ to, label }) => (
-                  <Link
+                  <NavLink
                     key={to}
                     to={to}
                     onClick={() => handleNavLinkClick()}
-                    className="nav-mobile-link"
+                    className={({ isActive }) => `nav-mobile-link ${isActive ? 'active' : ''}`}
                   >
                     {label}
-                  </Link>
+                  </NavLink>
                 ))}
               </>
             )}

@@ -93,7 +93,7 @@ export default function StudioCard({ studio, status, price, onBook, onDetail, de
             </button>
             {isAvailable ? (
               <button
-                className="btn btn-primary"
+                className="btn btn-primary btn-md"
                 onClick={e => { e.stopPropagation(); onBook?.(studio); }}
                 style={{ padding: "0.65rem 1.5rem" }}
               >
@@ -101,7 +101,7 @@ export default function StudioCard({ studio, status, price, onBook, onDetail, de
               </button>
             ) : (
               <button
-                className="btn"
+                className="btn btn-md"
                 disabled
                 style={{ 
                   background: "var(--gray-100)",
