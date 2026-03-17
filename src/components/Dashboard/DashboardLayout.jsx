@@ -60,7 +60,7 @@ const DashboardLayout = ({ children }) => {
                 </nav>
 
                 <div className="sidebar-footer">
-                    <button onClick={handleLogout} className="logout-btn">
+                    <button onClick={handleLogout} className="btn btn-outline" style={{ width: '100%' }}>
                         <FaSignOutAlt /> Logout
                     </button>
                 </div>

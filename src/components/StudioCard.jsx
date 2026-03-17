@@ -79,9 +79,10 @@ export default function StudioCard({ studio, status, price, onBook, onDetail, de
 
         {/* Price row + CTA */}
         <div className="studio-card-footer">
-          <div>
-            <span className="studio-card-price-amount">MAD {displayPrice}</span>
-            <span className="studio-card-price-unit">/ hr</span>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
+            <span className="studio-card-price-amount">{displayPrice}</span>
+            <span className="studio-card-price-currency" style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--gray-700)' }}>MAD</span>
+            <span className="studio-card-price-unit" style={{ fontSize: '0.85rem', color: 'var(--gray-400)', fontWeight: 400 }}>/ hr</span>
           </div>
 
           <div className="studio-card-actions">
@@ -91,28 +92,13 @@ export default function StudioCard({ studio, status, price, onBook, onDetail, de
             >
               Details
             </button>
-            {isAvailable ? (
-              <button
-                className="btn btn-primary btn-md"
-                onClick={e => { e.stopPropagation(); onBook?.(studio); }}
-                style={{ padding: "0.65rem 1.5rem" }}
-              >
-                Book
-              </button>
-            ) : (
-              <button
-                className="btn btn-md"
-                disabled
-                style={{ 
-                  background: "var(--gray-100)",
-                  color: "var(--gray-500)",
-                  cursor: "not-allowed",
-                  padding: "0.65rem 1.5rem"
-                }}
-              >
-                Book
-              </button>
-            )}
+            <button
+              className="btn btn-primary btn-md"
+              onClick={e => { e.stopPropagation(); onBook?.(studio); }}
+              style={{ padding: "0.65rem 1.5rem" }}
+            >
+              Book
+            </button>
           </div>
         </div>
       </div>

@@ -71,25 +71,6 @@
 .sidebar-footer {
   margin-top: auto;
   padding-top: 1.5rem;
-  border-top: 1px solid var(--gray-100);
-}
-
-.logout-btn {
-  width: 100%;
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  padding: 0.75rem 1rem;
-  border-radius: var(--r-md);
-  color: var(--reserved);
-  font-weight: 500;
-  font-size: 0.9rem;
-  background: transparent;
-  transition: all var(--t-base);
-}
-
-.logout-btn:hover {
-  background: var(--reserved-bg);
 }
 
 .dashboard-main {
