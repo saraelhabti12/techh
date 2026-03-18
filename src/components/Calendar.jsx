@@ -28,35 +28,34 @@ export default function Calendar({ selectedDate, onSelectDate, onAvailabilityLoa
   const fetchMonthAvail = useCallback(async () => {
     setLoading(true);
     try {
-      // Import here dynamically to avoid dependency cycles or unused vars
-      const { getStudios } = await import("../api/studioApi");
-      const res = await getStudios();
-      const studios = res?.data || res || [];
+      const { getAvailability } = await import("../api/studioApi");
       
       const newAvailMap = {};
       const dim = new Date(viewY, viewM + 1, 0).getDate();
+      
+      // Fetch availability for each day in the month
+      const promises = [];
       for (let d = 1; d <= dim; d++) {
         const ds = fmt(viewY, viewM, d);
-        if (ds < fmt(today.getFullYear(), today.getMonth(), today.getDate())) continue; // Skip past dates
-        
-        // Mock data logic for every future day in the month
-        const data = studios.map(s => {
-            const hash = s.id + d + viewM;
-            return {
-              studio_id: s.id,
-              status: hash % 3 === 0 ? "reserved" : "available",
-              price: s.price_per_hour
-            };
-        });
-        newAvailMap[ds] = data;
+        if (ds < fmt(today.getFullYear(), today.getMonth(), today.getDate())) continue;
+        promises.push(getAvailability(ds));
       }
       
+      const results = await Promise.all(promises);
+      results.forEach(res => {
+        const data = res?.data || [];
+        if (data.length > 0) {
+          newAvailMap[data[0].date] = data;
+        }
+      });
+      
       setAvailMap(prev => ({ ...prev, ...newAvailMap }));
+      
       if (selectedDate && newAvailMap[selectedDate]) {
         onAvailabilityLoad?.(newAvailMap[selectedDate]);
       }
     } catch (e) {
-      console.error(e);
+      console.error("Calendar fetch error:", e);
     } finally {
       setLoading(false);
     }
@@ -98,8 +97,12 @@ export default function Calendar({ selectedDate, onSelectDate, onAvailabilityLoa
     const ds = fmt(viewY, viewM, day);
     const avail = availMap[ds];
     if (!avail || avail.length === 0) return { hasData: false };
-    const anyAvail    = avail.some(a => a.status === "available");
+    
+    // Check if ANY studio is available on this date
+    const anyAvail = avail.some(a => a.status === "available" || a.status === "partially_reserved");
+    // All studios are "reserved" (full day)
     const allReserved = avail.every(a => a.status === "reserved");
+    
     return { hasData: true, anyAvail, allReserved, ds };
   };
 

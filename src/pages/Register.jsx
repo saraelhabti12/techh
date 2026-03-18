@@ -12,16 +12,16 @@ const Register = () => {
     const [passwordConfirmation, setPasswordConfirmation] = useState('');
     const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
-    const [validationErrors, setValidationErrors] = useState({}); // New state for validation errors
+    const [validationErrors, setValidationErrors] = useState({});
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
-    const { loginUser } = useAuth(); // Assuming successful register logs them in or we just redirect
+    const { loginUser } = useAuth();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
         setError('');
-        setValidationErrors({}); // Clear previous validation errors
-        
+        setValidationErrors({});
+
         if (password !== passwordConfirmation) {
             setError('Passwords do not match.');
             return;
@@ -36,7 +36,6 @@ const Register = () => {
             navigate('/dashboard'); 
         } catch (err) {
             if (err.response && err.response.status === 422 && err.response.data.errors) {
-                // Laravel validation errors
                 setValidationErrors(err.response.data.errors);
                 setError(err.response.data.message || 'Validation failed');
             } else {
@@ -49,19 +48,15 @@ const Register = () => {
 
     return (
         <section className="section" style={{ minHeight: 'calc(100vh - 72px)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--gray-50)', padding: '2rem 1rem' }}>
-            <div style={{
+            <div className="card" style={{
                 display: 'flex',
                 flexDirection: 'row',
-                background: "var(--white)",
-                borderRadius: "var(--r-xl)",
                 width: "100%",
                 maxWidth: "1000px",
                 minHeight: "550px",
-                boxShadow: "var(--shadow-lg)",
-                border: "1px solid var(--gray-200)",
-                overflow: 'hidden'
+                overflow: 'hidden',
+                border: "1px solid var(--gray-200)"
             }}>
-                {/* Left Brand Panel - hide on small screens */}
                 <div className="auth-brand-panel" style={{
                     flex: '1',
                     background: 'var(--grad-hero)',
@@ -83,13 +78,12 @@ const Register = () => {
                     </div>
                 </div>
 
-                {/* Right Form Panel */}
-                <div style={{ flex: '1.2', padding: '3rem 2.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div style={{ flex: '1.2', padding: '3rem 2.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: 'var(--white)' }}>
                     <div style={{ marginBottom: '2rem' }}>
                         <h2 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--gray-900)', marginBottom: '0.5rem' }}>Create an Account</h2>
                         <p style={{ color: 'var(--gray-500)', fontSize: '0.95rem' }}>Fill in your details to get started.</p>
                     </div>
-                    
+
                     {(error || Object.keys(validationErrors).length > 0) && (
                         <div style={{
                             background: '#fee2e2', color: '#b91c1c', padding: '0.75rem', borderRadius: 'var(--r-sm)',
@@ -132,12 +126,12 @@ const Register = () => {
                         <div style={{ display: 'flex', gap: '1rem', flexWrap: 'wrap' }}>
                             <div className="field" style={{ flex: '1', minWidth: '200px' }}>
                                 <label className="field-label" htmlFor="password">Password</label>
-                                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                                <div style={{ position: 'relative' }}>
                                     <input
                                         type={showPassword ? "text" : "password"}
                                         id="password"
                                         className="field-input"
-                                        style={{ width: '100%', paddingRight: '3.5rem' }}
+                                        style={{ paddingRight: '3.5rem' }}
                                         value={password}
                                         onChange={(e) => setPassword(e.target.value)}
                                         required
@@ -147,9 +141,9 @@ const Register = () => {
                                         type="button" 
                                         onClick={() => setShowPassword(!showPassword)}
                                         style={{
-                                            position: 'absolute', right: '0.75rem', background: 'none', border: 'none',
-                                            color: 'var(--gray-500)', fontSize: '0.75rem', fontWeight: '600', cursor: 'pointer',
-                                            padding: '0.2rem'
+                                            position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)',
+                                            background: 'none', border: 'none', color: 'var(--gray-500)', fontSize: '0.75rem', 
+                                            fontWeight: '700', cursor: 'pointer', padding: '0.2rem'
                                         }}
                                     >
                                         {showPassword ? 'HIDE' : 'SHOW'}
@@ -159,26 +153,23 @@ const Register = () => {
                             </div>
                             <div className="field" style={{ flex: '1', minWidth: '200px' }}>
                                 <label className="field-label" htmlFor="password_confirmation">Confirm</label>
-                                <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
-                                    <input
-                                        type={showPassword ? "text" : "password"}
-                                        id="password_confirmation"
-                                        className="field-input"
-                                        style={{ width: '100%', paddingRight: '3.5rem' }}
-                                        value={passwordConfirmation}
-                                        onChange={(e) => setPasswordConfirmation(e.target.value)}
-                                        required
-                                        placeholder="••••••••"
-                                    />
-                                </div>
+                                <input
+                                    type={showPassword ? "text" : "password"}
+                                    id="password_confirmation"
+                                    className="field-input"
+                                    value={passwordConfirmation}
+                                    onChange={(e) => setPasswordConfirmation(e.target.value)}
+                                    required
+                                    placeholder="••••••••"
+                                />
                                 {validationErrors.password_confirmation && <p style={{ color: '#b91c1c', fontSize: '0.8rem', marginTop: '0.25rem' }}>{validationErrors.password_confirmation[0]}</p>}
                             </div>
                         </div>
-                        
+
                         <button
                             type="submit"
                             className="btn btn-primary btn-lg"
-                            style={{ width: '100%', marginTop: '1rem' }}
+                            style={{ width: '100%', marginTop: '0.5rem' }}
                             disabled={loading}
                         >
                             {loading ? 'Registering...' : 'Register'}

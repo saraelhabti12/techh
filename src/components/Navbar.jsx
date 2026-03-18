@@ -11,7 +11,7 @@ import { useAuth } from "../App"; // Import useAuth context
 export default function Navbar({ onBook }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
-  const { isAuthenticated, logoutUser } = useAuth(); // Use auth context
+  const { isAuthenticated, logoutUser, user } = useAuth(); // Use auth context
 
   useEffect(() => {
     const handle = () => setScrolled(window.scrollY > 16);
@@ -25,15 +25,7 @@ export default function Navbar({ onBook }) {
     { to: "/about",   label: "About" },
   ];
 
-  const authLinks = [
-    { to: "/dashboard", label: "Dashboard" },
-    { to: "#logout",    label: "Logout", action: logoutUser },
-  ];
-
-  const guestLinks = [
-    { to: "/login",   label: "Login" },
-    { to: "/register",label: "Register" },
-  ];
+  const dashboardPath = user?.is_admin ? "/admin/dashboard" : "/dashboard";
 
   const handleNavLinkClick = (action) => {
     setMenuOpen(false);
@@ -70,29 +62,37 @@ export default function Navbar({ onBook }) {
             ))}
             {isAuthenticated ? (
               <>
-                {authLinks.map(({ to, label, action }) => (
-                  <NavLink
-                    key={to}
-                    to={to}
-                    onClick={() => handleNavLinkClick(action)}
-                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                  >
-                    {label}
-                  </NavLink>
-                ))}
+                <NavLink
+                  to={dashboardPath}
+                  onClick={() => handleNavLinkClick()}
+                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                >
+                  Dashboard
+                </NavLink>
+                <button
+                  onClick={() => logoutUser()}
+                  className="nav-link"
+                  style={{ background: "none", border: "none", cursor: "pointer", font: "inherit" }}
+                >
+                  Logout
+                </button>
               </>
             ) : (
               <>
-                {guestLinks.map(({ to, label }) => (
-                  <NavLink
-                    key={to}
-                    to={to}
-                    onClick={() => handleNavLinkClick()}
-                    className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                  >
-                    {label}
-                  </NavLink>
-                ))}
+                <NavLink
+                  to="/login"
+                  onClick={() => handleNavLinkClick()}
+                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                >
+                  Login
+                </NavLink>
+                <NavLink
+                  to="/register"
+                  onClick={() => handleNavLinkClick()}
+                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+                >
+                  Register
+                </NavLink>
               </>
             )}
           </nav>
@@ -158,29 +158,37 @@ export default function Navbar({ onBook }) {
             ))}
             {isAuthenticated ? (
               <>
-                {authLinks.map(({ to, label, action }) => (
-                  <NavLink
-                    key={to}
-                    to={to}
-                    onClick={() => handleNavLinkClick(action)}
-                    className={({ isActive }) => `nav-mobile-link ${isActive ? 'active' : ''}`}
-                  >
-                    {label}
-                  </NavLink>
-                ))}
+                <NavLink
+                  to={dashboardPath}
+                  className={({ isActive }) => `nav-mobile-link ${isActive ? 'active' : ''}`}
+                  onClick={() => handleNavLinkClick()}
+                >
+                  Dashboard
+                </NavLink>
+                <button
+                  onClick={() => { logoutUser(); setMenuOpen(false); }}
+                  className="nav-mobile-link"
+                  style={{ background: "none", border: "none", cursor: "pointer", font: "inherit", textAlign: "left", width: "100%" }}
+                >
+                  Logout
+                </button>
               </>
             ) : (
               <>
-                {guestLinks.map(({ to, label }) => (
-                  <NavLink
-                    key={to}
-                    to={to}
-                    onClick={() => handleNavLinkClick()}
-                    className={({ isActive }) => `nav-mobile-link ${isActive ? 'active' : ''}`}
-                  >
-                    {label}
-                  </NavLink>
-                ))}
+                <NavLink
+                  to="/login"
+                  className={({ isActive }) => `nav-mobile-link ${isActive ? 'active' : ''}`}
+                  onClick={() => handleNavLinkClick()}
+                >
+                  Login
+                </NavLink>
+                <NavLink
+                  to="/register"
+                  className={({ isActive }) => `nav-mobile-link ${isActive ? 'active' : ''}`}
+                  onClick={() => handleNavLinkClick()}
+                >
+                  Register
+                </NavLink>
               </>
             )}
             <button

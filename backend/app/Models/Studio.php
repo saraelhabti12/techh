@@ -15,4 +15,14 @@ class Studio extends Model
         'features' => 'array',
         'gallery' => 'array',
     ];
+
+    public function reservations()
+    {
+        return $this->hasMany(Reservation::class);
+    }
+
+    public function slots()
+    {
+        return $this->hasMany(ReservationSlot::class);
+    }
 }

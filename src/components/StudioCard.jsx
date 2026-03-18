@@ -40,11 +40,35 @@ export default function StudioCard({ studio, status, price, onBook, onDetail, de
           <span className="dot" />
           {isAvailable ? "Available" : "Reserved"}
         </div>
+
+        {/* ── Hover Overlay Actions ── */}
+        {!isAvailable ? (
+           <div className="studio-card-actions" style={{ background: 'rgba(0,0,0,0.6)', cursor: 'not-allowed' }}>
+              <span style={{ color: 'white', fontWeight: 600, fontSize: '0.9rem' }}>Fully Booked</span>
+           </div>
+        ) : (
+          <div className="studio-card-actions">
+            <button
+              className="btn btn-primary"
+              style={{ padding: '0.75rem 1.5rem', minWidth: '130px' }}
+              onClick={e => { e.stopPropagation(); onBook?.(studio); }}
+            >
+              Book Now
+            </button>
+            <button
+              className="btn btn-outline"
+              style={{ padding: '0.75rem 1.5rem', minWidth: '130px', background: 'rgba(255,255,255,1)', color: 'var(--gray-900)', borderColor: 'var(--white)' }}
+              onClick={e => { e.stopPropagation(); onDetail?.(studio); }}
+            >
+              View Details
+            </button>
+          </div>
+        )}
       </div>
 
       {/* ── Body ── */}
       <div className="studio-card-content">
-        <div className="studio-card-header">
+      <div className="studio-card-header">
           <h3 className="studio-card-title">
             {studio.name}
           </h3>
@@ -77,28 +101,12 @@ export default function StudioCard({ studio, status, price, onBook, onDetail, de
           )}
         </div>
 
-        {/* Price row + CTA */}
+        {/* Price row */}
         <div className="studio-card-footer">
           <div style={{ display: 'flex', alignItems: 'baseline', gap: '0.25rem' }}>
             <span className="studio-card-price-amount">{displayPrice}</span>
             <span className="studio-card-price-currency" style={{ fontSize: '0.9rem', fontWeight: 600, color: 'var(--gray-700)' }}>MAD</span>
             <span className="studio-card-price-unit" style={{ fontSize: '0.85rem', color: 'var(--gray-400)', fontWeight: 400 }}>/ hr</span>
-          </div>
-
-          <div className="studio-card-actions">
-            <button
-              className="btn-secondary"
-              onClick={e => { e.stopPropagation(); onDetail?.(studio); }}
-            >
-              Details
-            </button>
-            <button
-              className="btn btn-primary btn-md"
-              onClick={e => { e.stopPropagation(); onBook?.(studio); }}
-              style={{ padding: "0.65rem 1.5rem" }}
-            >
-              Book
-            </button>
           </div>
         </div>
       </div>

@@ -14,15 +14,18 @@ class ReservationController extends Controller
 {
     public function index()
     {
-        return response()->json(['data' => Reservation::all()]);
+        return response()->json(['data' => Reservation::with('slots')->get()]);
     }
 
     public function store(Request $request)
     {
         $validated = $request->validate([
-            'studio_ids' => 'required|array',
-            'dates' => 'required|array',
-            'time_slots' => 'required|array',
+            'studio_ids' => 'nullable|array', // Optional list of pre-selected studios
+            'slots' => 'required|array|min:1',
+            'slots.*.studio_id' => 'required|integer',
+            'slots.*.date' => 'required|date',
+            'slots.*.start_time' => 'required|date_format:H:i',
+            'slots.*.end_time' => 'required|date_format:H:i|after:slots.*.start_time',
             'service_type' => 'required|string',
             'equipment' => 'nullable|array',
             'team' => 'nullable|array',
@@ -31,76 +34,83 @@ class ReservationController extends Controller
             'phone' => 'required|string',
         ]);
 
-        // Filter time slots to remove broad labels like 'morning', keeping specific slots 'HH:MM - HH:MM'
-        $specificSlots = array_filter($validated['time_slots'], function($slot) {
-            return str_contains($slot, '-');
-        });
-
-        if (empty($specificSlots)) {
-             return response()->json([
-                'message' => 'Please select specific time slots.'
-            ], 422);
-        }
-
         $bookingReference = 'TS-' . time() . '-' . strtoupper(Str::random(4));
-        $createdReservations = [];
-
+        
         try {
             DB::beginTransaction();
 
-            // 1. Calculate base equipment price for this booking
+            // Calculate base equipment price
             $equipmentTotal = 0;
             if (!empty($validated['equipment'])) {
-                // Assuming $validated['equipment'] is an array of names from the frontend
                 $equipmentItems = Equipment::whereIn('name', $validated['equipment'])->get();
                 foreach ($equipmentItems as $item) {
                     $equipmentTotal += $item->price_per_unit;
                 }
             }
 
-            foreach ($validated['studio_ids'] as $studioId) {
-                $studio = Studio::findOrFail($studioId);
-                
-                foreach ($validated['dates'] as $date) {
-                    foreach ($specificSlots as $slot) {
-                        
-                        // Check availability
-                        $exists = Reservation::where('studio_id', $studioId)
-                            ->where('date', $date)
-                            ->where('time_slot', $slot)
-                            ->exists();
-                            
-                        if ($exists) {
-                            DB::rollBack();
-                            return response()->json([
-                                'message' => "The time slot {$slot} on {$date} for studio '{$studio->name}' is already booked."
-                            ], 422);
-                        }
-                        
-                        // Calculate price per specific slot
-                        // 1 hour per slot * studio hourly rate + equipment base cost
-                        // In reality, equipment cost might be prorated, but let's assume flat rate per slot for simplicity
-                        $slotPrice = $studio->price_per_hour + $equipmentTotal;
+            $totalPrice = $equipmentTotal;
+            $processedSlots = [];
 
-                        $res = Reservation::create([
-                            'user_id' => Auth::id(), // Attach authenticated user's ID
-                            'booking_reference' => $bookingReference,
-                            'studio_id' => $studioId,
-                            'date' => $date,
-                            'time_slot' => $slot,
-                            'service_type' => $validated['service_type'],
-                            'selected_equipment' => $validated['equipment'] ?? [],
-                            'selected_team_members' => $validated['team'] ?? [],
-                            'customer_name' => $validated['name'],
-                            'customer_email' => $validated['email'],
-                            'customer_phone' => $validated['phone'],
-                            'total_price' => $slotPrice,
-                            'status' => 'pending', // Set initial status
-                        ]);
-                        
-                        $createdReservations[] = $res;
-                    }
+            // Conflict Detection & Price Calculation
+            foreach ($validated['slots'] as $slotData) {
+                $studioId = $slotData['studio_id'];
+                $studio = Studio::findOrFail($studioId);
+
+                // Overlap condition: (startA < endB) AND (endA > startB)
+                $exists = \App\Models\ReservationSlot::whereHas('reservation', function($q) use ($studioId) {
+                        $q->where('status', '!=', 'cancelled');
+                    })
+                    ->where('studio_id', $studioId)
+                    ->where('date', $slotData['date'])
+                    ->where(function ($query) use ($slotData) {
+                        $query->where(function ($q) use ($slotData) {
+                            $q->where('start_time', '<', $slotData['end_time'])
+                              ->where('end_time', '>', $slotData['start_time']);
+                        });
+                    })
+                    ->exists();
+
+                if ($exists) {
+                    DB::rollBack();
+                    return response()->json([
+                        'message' => "Studio '{$studio->name}' is already booked for the slot {$slotData['start_time']} - {$slotData['end_time']} on {$slotData['date']}."
+                    ], 422);
                 }
+
+                // Calculate duration
+                $start = \Carbon\Carbon::parse($slotData['start_time']);
+                $end = \Carbon\Carbon::parse($slotData['end_time']);
+                $durationHours = $end->diffInMinutes($start) / 60;
+                
+                $totalPrice += ($durationHours * $studio->price_per_hour);
+                $processedSlots[] = $slotData;
+            }
+
+            $firstSlot = $processedSlots[0];
+
+            $reservation = Reservation::create([
+                'user_id' => Auth::id(),
+                'booking_reference' => $bookingReference,
+                'studio_id' => $firstSlot['studio_id'], // Primary studio for legacy compatibility
+                'date' => $firstSlot['date'],
+                'time_slot' => $firstSlot['start_time'] . ' - ' . $firstSlot['end_time'],
+                'service_type' => $validated['service_type'],
+                'selected_equipment' => $validated['equipment'] ?? [],
+                'selected_team_members' => $validated['team'] ?? [],
+                'customer_name' => $validated['name'],
+                'customer_email' => $validated['email'],
+                'customer_phone' => $validated['phone'],
+                'total_price' => $totalPrice,
+                'status' => 'pending',
+            ]);
+
+            foreach ($processedSlots as $slot) {
+                $reservation->slots()->create([
+                    'studio_id' => $slot['studio_id'],
+                    'date' => $slot['date'],
+                    'start_time' => $slot['start_time'],
+                    'end_time' => $slot['end_time'],
+                ]);
             }
 
             DB::commit();
@@ -109,7 +119,7 @@ class ReservationController extends Controller
                 'message' => 'Reservation created successfully',
                 'data' => [
                     'id' => $bookingReference,
-                    'reservations' => $createdReservations
+                    'reservation' => $reservation->load('slots.studio')
                 ]
             ], 201);
 
@@ -124,13 +134,25 @@ class ReservationController extends Controller
 
     public function myReservations(Request $request)
     {
-        $reservations = $request->user()->reservations()->with('studio')->get()->map(function ($reservation) {
+        $reservations = $request->user()->reservations()->with(['studio', 'slots'])->get()->map(function ($reservation) {
+            
+            // Format slots for display if necessary, but returning the raw slots is good too
+            $slotsData = $reservation->slots->map(function($slot) {
+                return [
+                    'date' => $slot->date,
+                    'start_time' => \Carbon\Carbon::parse($slot->start_time)->format('H:i'),
+                    'end_time' => \Carbon\Carbon::parse($slot->end_time)->format('H:i')
+                ];
+            });
+
             return [
                 "studio" => $reservation->studio->name,
                 "date" => $reservation->date,
                 "time_slot" => $reservation->time_slot,
                 "status" => $reservation->status,
                 "booking_reference" => $reservation->booking_reference,
+                "slots" => $slotsData,
+                "total_price" => $reservation->total_price,
             ];
         });
 

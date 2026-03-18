@@ -62,6 +62,12 @@ export const getStudio = async (id) => req(`/studios/${id}`);
  */
 export const getAvailability = async (date) => req(`/studios/availability?date=${date}`);
 
+/**
+ * GET /api/studios/:id/availability?date=YYYY-MM-DD
+ * @returns { data: { studio_id, date, booked_slots: { start_time, end_time }[] } }
+ */
+export const getStudioAvailability = async (id, date) => req(`/studios/${id}/availability?date=${date}`);
+
 // ── Reservations ─────────────────────────────────────────────
 /**
  * POST /api/reservations

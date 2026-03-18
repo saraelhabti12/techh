@@ -1,40 +1,33 @@
-import { useState, useCallback, useEffect } from "react";
-import { createReservation, getStudios } from "../api/studioApi";
+import { useState, useCallback, useEffect, useMemo } from "react";
+import { createReservation, getStudios, getStudioAvailability } from "../api/studioApi";
+import Modal from "./Modal";
+import Calendar from "./Calendar";
+import { FaCheck, FaArrowRight, FaArrowLeft, FaCalendarAlt, FaClock, FaUser, FaEnvelope, FaPhone, FaBuilding, FaVideo, FaUsers, FaTrash } from 'react-icons/fa';
 
-/**
- * ReservationForm
- * ─ Multi-step booking wizard rendered in a modal.
- * Steps: 1 Service → 2 Studio → 3 Schedule → 4 Basic Info → 5 Confirmation
- */
-
-const TIME_SLOTS = [
-  { id: "morning",   label: "Morning",   time: "8:00 AM – 12:00 PM", icon: "🌅", emoji: "Morning light" },
-  { id: "afternoon", label: "Afternoon", time: "13:00 PM – 18:00 PM",  icon: "☀️", emoji: "Golden hours" },
-  { id: "evening",   label: "Evening",   time: "19:00 PM – 00:00 PM",  icon: "🌙", emoji: "Night vibes" },
+const TIME_SLOTS_PERIODS = [
+  { id: "morning",   label: "Morning",   time: "08:00 - 12:00", icon: <FaCalendarAlt /> },
+  { id: "afternoon", label: "Afternoon", time: "12:00 - 18:00",  icon: <FaCalendarAlt /> },
+  { id: "evening",   label: "Evening",   time: "18:00 - 23:59",  icon: <FaCalendarAlt /> },
 ];
 
 const SUB_SLOTS = {
   morning: ["08:00 - 09:00", "09:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00"],
   afternoon: ["13:00 - 14:00", "14:00 - 15:00", "15:00 - 16:00", "16:00 - 17:00", "17:00 - 18:00"],
-  evening: ["19:00 - 20:00", "20:00 - 21:00", "21:00 - 22:00", "22:00 - 23:00", "23:00 - 00:00"],
+  evening: ["19:00 - 20:00", "20:00 - 21:00", "21:00 - 22:00", "22:00 - 23:00", "23:00 - 23:59"],
 };
 
 const SERVICES = [
-  { id: "studio", label: "Studio Only", icon: "🏢" },
-  { id: "equipment", label: "Studio + Equipment", icon: "🎥" },
-  { id: "team", label: "Studio + Equipment + Team", icon: "👥" },
+  { id: "studio", label: "Studio Only", icon: <FaBuilding /> },
+  { id: "equipment", label: "Studio + Equipment", icon: <FaVideo /> },
+  { id: "team", label: "Studio + Equipment + Team", icon: <FaUsers /> },
 ];
 
-const EQUIPMENT_LIST = ["Camera", "Lighting", "Microphone", "Tripod", "Green Screen"];
+const EQUIPMENT_LIST = ["Cameras", "Lighting", "Microphone", "Lens", "Stabilisateurs","Drone"];
 const TEAM_LIST = ["Photographer", "Videographer", "Lighting Technician", "Sound Engineer", "Editor"];
 
-const MONTHS = ["Jan","Feb","Mar","Apr","May","Jun","Jul","Aug","Sep","Oct","Nov","Dec"];
-const WDAYS  = ["Su","Mo","Tu","We","Th","Fr","Sa"];
-
 function pad(n) { return String(n).padStart(2, "0"); }
-function fmt(y, m, d) { return `${y}-${pad(m+1)}-${pad(d)}`; }
 
-const STEP_LABELS = ["Service", "Studio", "Schedule", "Your Info", "Confirmed"];
+const STEP_LABELS = ["Service", "Studios", "Schedule", "Info", "Finish"];
 
 // ── Sub-components ─────────────────────────────────────────────
 
@@ -42,24 +35,25 @@ function StepPill({ step, current }) {
   const done = current > step;
   const active = current === step;
   return (
-    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.4rem" }}>
+    <div style={{ display: "flex", flexDirection: "column", alignItems: "center", gap: "0.5rem", flex: 1 }}>
       <div style={{
-        width: 32, height: 32, borderRadius: "50%",
+        width: 36, height: 36, borderRadius: "12px",
         display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: "0.85rem", fontWeight: 600, transition: "all var(--t-base)",
+        fontSize: "0.9rem", fontWeight: 700, transition: "all 0.3s",
         background: done ? "var(--grad-cta)"
-          : active ? "var(--pink-100)"
-          : "var(--gray-100)",
-        color: done ? "var(--white)" : active ? "var(--pink-500)" : "var(--gray-500)",
+          : active ? "var(--pink-50)"
+          : "var(--gray-50)",
+        color: done ? "var(--white)" : active ? "var(--pink-500)" : "var(--gray-400)",
         border: active ? "2px solid var(--pink-500)" : "2px solid transparent",
         boxShadow: active ? "0 0 0 4px rgba(255,15,155,0.1)" : "none",
+        transform: active ? 'scale(1.1)' : 'scale(1)'
       }}>
-        {done ? "✓" : step}
+        {done ? <FaCheck size={14} /> : step}
       </div>
       <span style={{
-        fontSize: "0.65rem", letterSpacing: "0.08em", textTransform: "uppercase",
+        fontSize: "0.65rem", letterSpacing: "0.05em", textTransform: "uppercase",
         color: active ? "var(--pink-500)" : done ? "var(--gray-900)" : "var(--gray-400)",
-        fontWeight: active || done ? 600 : 500,
+        fontWeight: 700,
       }}>
         {STEP_LABELS[step - 1]}
       </span>
@@ -67,46 +61,27 @@ function StepPill({ step, current }) {
   );
 }
 
-// Step 1 – Service Type
 function Step1({ data, onChange }) {
-  const handleServiceClick = (id) => {
-    onChange("serviceType", id);
-    if (id === "studio") {
-      onChange("equipment", []);
-      onChange("team", []);
-    } else if (id === "equipment") {
-      onChange("team", []);
-    }
-  };
-
-  const toggleItem = (listKey, item) => {
-    const current = data[listKey] || [];
-    if (current.includes(item)) {
-      onChange(listKey, current.filter(i => i !== item));
-    } else {
-      onChange(listKey, [...current, item]);
-    }
-  };
-
   return (
     <div className="animate-fadeUp">
-      <h2 className="heading-md" style={{ marginBottom: "0.5rem" }}>Select Service Type</h2>
-      <p className="body-sm" style={{ marginBottom: "2rem" }}>How can we assist your production today?</p>
+      <h2 className="heading-md" style={{ marginBottom: "0.5rem" }}>Service Selection</h2>
+      <p className="body-sm" style={{ marginBottom: "2.5rem" }}>Choose how you'd like to use our creative spaces.</p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1rem", marginBottom: "2rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1.25rem", marginBottom: "2.5rem" }}>
         {SERVICES.map(s => {
           const sel = data.serviceType === s.id;
           return (
-            <div key={s.id} onClick={() => handleServiceClick(s.id)}
+            <div key={s.id} onClick={() => onChange("serviceType", s.id)}
               style={{
-                borderRadius: "var(--r-md)", padding: "1.5rem 1rem", textAlign: "center", cursor: "pointer",
-                border: `1.5px solid ${sel ? "var(--pink-400)" : "var(--gray-200)"}`,
+                borderRadius: "20px", padding: "2rem 1rem", textAlign: "center", cursor: "pointer",
+                border: `2px solid ${sel ? "var(--pink-500)" : "var(--gray-100)"}`,
                 background: sel ? "var(--pink-50)" : "var(--white)",
-                boxShadow: sel ? "var(--shadow-sm)" : "none",
-                transition: "all var(--t-fast)",
+                boxShadow: sel ? "var(--shadow-md)" : "var(--shadow-xs)",
+                transition: "all 0.2s ease-out",
+                transform: sel ? 'translateY(-4px)' : 'none'
               }}>
-              <div style={{ fontSize: "2rem", marginBottom: "0.75rem" }}>{s.icon}</div>
-              <div style={{ fontSize: "0.85rem", fontWeight: 600, color: sel ? "var(--pink-500)" : "var(--gray-700)" }}>{s.label}</div>
+              <div style={{ fontSize: "2rem", marginBottom: "1rem", color: sel ? "var(--pink-500)" : "var(--gray-300)" }}>{s.icon}</div>
+              <div style={{ fontSize: "0.9rem", fontWeight: 700, color: sel ? "var(--pink-500)" : "var(--gray-900)" }}>{s.label}</div>
             </div>
           );
         })}
@@ -114,20 +89,22 @@ function Step1({ data, onChange }) {
 
       {(data.serviceType === "equipment" || data.serviceType === "team") && (
         <div className="animate-fadeIn" style={{ marginBottom: "2rem" }}>
-          <h4 className="eyebrow">Select Equipment</h4>
+          <h4 className="eyebrow" style={{ marginBottom: '1rem' }}>Additional Equipment</h4>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
             {EQUIPMENT_LIST.map(eq => {
               const isSel = (data.equipment || []).includes(eq);
               return (
-                <div key={eq} onClick={() => toggleItem("equipment", eq)}
+                <div key={eq} onClick={() => {
+                  const current = data.equipment || [];
+                  onChange("equipment", isSel ? current.filter(i => i !== eq) : [...current, eq]);
+                }}
                   style={{
-                    borderRadius: "var(--r-sm)", padding: "0.5rem 1rem", cursor: "pointer",
-                    border: `1.5px solid ${isSel ? "var(--pink-400)" : "var(--gray-200)"}`,
+                    borderRadius: "12px", padding: "0.6rem 1.25rem", cursor: "pointer",
+                    border: `1.5px solid ${isSel ? "var(--pink-500)" : "var(--gray-200)"}`,
                     background: isSel ? "var(--grad-cta)" : "var(--white)",
                     color: isSel ? "var(--white)" : "var(--gray-700)",
-                    fontSize: "0.85rem", fontWeight: 500,
-                    transition: "all var(--t-fast)",
-                    boxShadow: isSel ? "var(--shadow-xs)" : "none"
+                    fontSize: "0.85rem", fontWeight: 600,
+                    transition: "all 0.2s",
                   }}
                 >
                   {eq}
@@ -139,24 +116,26 @@ function Step1({ data, onChange }) {
       )}
 
       {data.serviceType === "team" && (
-        <div className="animate-fadeIn">
-          <h4 className="eyebrow">Select Team</h4>
+        <div className="animate-fadeIn" style={{ marginBottom: "2rem" }}>
+          <h4 className="eyebrow" style={{ marginBottom: '1rem' }}>Select Team Members</h4>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
-            {TEAM_LIST.map(tm => {
-              const isSel = (data.team || []).includes(tm);
+            {TEAM_LIST.map(member => {
+              const isSel = (data.team || []).includes(member);
               return (
-                <div key={tm} onClick={() => toggleItem("team", tm)}
+                <div key={member} onClick={() => {
+                  const current = data.team || [];
+                  onChange("team", isSel ? current.filter(i => i !== member) : [...current, member]);
+                }}
                   style={{
-                    borderRadius: "var(--r-sm)", padding: "0.5rem 1rem", cursor: "pointer",
-                    border: `1.5px solid ${isSel ? "var(--pink-400)" : "var(--gray-200)"}`,
+                    borderRadius: "12px", padding: "0.6rem 1.25rem", cursor: "pointer",
+                    border: `1.5px solid ${isSel ? "var(--pink-500)" : "var(--gray-200)"}`,
                     background: isSel ? "var(--grad-cta)" : "var(--white)",
                     color: isSel ? "var(--white)" : "var(--gray-700)",
-                    fontSize: "0.85rem", fontWeight: 500,
-                    transition: "all var(--t-fast)",
-                    boxShadow: isSel ? "var(--shadow-xs)" : "none"
+                    fontSize: "0.85rem", fontWeight: 600,
+                    transition: "all 0.2s",
                   }}
                 >
-                  {tm}
+                  {member}
                 </div>
               );
             })}
@@ -167,541 +146,365 @@ function Step1({ data, onChange }) {
   );
 }
 
-// Step 2 – Studio
 function Step2({ data, onChange, studios }) {
-  const handleStudioClick = (s) => {
-    const selectedStudios = data.studios || [];
-    if (selectedStudios.find(sel => sel.id === s.id)) {
-      onChange("studios", selectedStudios.filter(sel => sel.id !== s.id));
-    } else {
-      onChange("studios", [...selectedStudios, s]);
-    }
+  const toggleStudio = (s) => {
+    const current = data.studios || [];
+    const exists = current.find(item => item.id === s.id);
+    onChange("studios", exists ? current.filter(item => item.id !== s.id) : [...current, s]);
+    onChange("slots", []);
   };
-
-  const totalPrice = (data.studios || []).reduce((sum, s) => sum + Number(s.price_per_hour || 0), 0);
 
   return (
     <div className="animate-fadeUp">
-      <h2 className="heading-md" style={{ marginBottom: "0.5rem" }}>Choose Your Studios</h2>
-      <p className="body-sm" style={{ marginBottom: "2rem" }}>Select the spaces that fit your vision.</p>
+      <h2 className="heading-md" style={{ marginBottom: "0.5rem" }}>Select Studios</h2>
+      <p className="body-sm" style={{ marginBottom: "1.5rem" }}>Select one or more professional spaces for your project.</p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(200px,1fr))", gap: "1rem", marginBottom: "2rem" }}>
+      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: "1.5rem" }}>
         {studios.map(s => {
-          const sel = (data.studios || []).some(sel => sel.id === s.id);
+          const sel = (data.studios || []).some(item => (item?.id === s.id || item === s.id));
           return (
-            <div key={s.id} onClick={() => handleStudioClick(s)}
+            <div key={s.id} onClick={() => toggleStudio(s)}
               style={{
-                borderRadius: "var(--r-md)", overflow: "hidden", cursor: "pointer",
-                border: `2px solid ${sel ? "var(--pink-400)" : "var(--pink-50)"}`,
-                boxShadow: sel ? "var(--shadow-md)" : "var(--shadow-xs)",
-                transform: sel ? "scale(1.02)" : "scale(1)",
-                transition: "all var(--t-base)",
+                borderRadius: "20px", overflow: "hidden", cursor: "pointer",
+                border: `2px solid ${sel ? "var(--pink-500)" : "var(--gray-100)"}`,
+                boxShadow: sel ? "var(--shadow-lg)" : "var(--shadow-sm)",
+                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                transform: sel ? 'scale(1.02)' : 'scale(1)'
               }}>
-              <div style={{ position: "relative", height: 120 }}>
+              <div style={{ height: 140, position: 'relative' }}>
                 <img src={s.image} alt={s.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                {sel && (
-                  <div style={{ position: "absolute", inset: 0, background: "rgba(255,15,155,0.2)", display: "flex", alignItems: "center", justifyContent: "center" }}>
-                    <div style={{ background: "var(--pink-500)", color: "#fff", borderRadius: "50%", width: 32, height: 32, display: "flex", alignItems: "center", justifyContent: "center", fontSize: "1rem", boxShadow: "var(--shadow-sm)" }}>
-                      ✓
-                    </div>
-                  </div>
-                )}
+                {sel && <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', background: 'var(--pink-500)', color: '#fff', width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #fff' }}><FaCheck size={10} /></div>}
               </div>
-              <div style={{ padding: "0.85rem", background: sel ? "var(--pink-50)" : "var(--white)" }}>
-                <div style={{ fontSize: "0.9rem", fontWeight: 600, marginBottom: "0.25rem", color: "var(--gray-900)" }}>{s.name}</div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.1rem", color: "var(--gray-700)" }}>MAD {s.price_per_hour}<span style={{ fontSize: "0.75rem", color: "var(--gray-500)" }}>/hr</span></div>
+              <div style={{ padding: "1.25rem", background: sel ? "var(--pink-50)" : "var(--white)" }}>
+                <div style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "0.25rem" }}>{s.name}</div>
+                <div style={{ fontSize: "1.1rem", fontWeight: 800, color: 'var(--pink-500)' }}>{s.price_per_hour} <small style={{ fontSize: '0.7rem', opacity: 0.6 }}>MAD/hr</small></div>
               </div>
             </div>
           );
         })}
       </div>
+    </div>
+  );
+}
 
-      {/* Hours */}
-      {data.studios && data.studios.length > 0 && (
-        <div style={{
-          background: "var(--pink-50)",
-          borderRadius: "var(--r-sm)", padding: "1.25rem 1.5rem", border: "1px solid var(--pink-200)",
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-        }}>
-          <div>
-            <div style={{ fontSize: "0.85rem", fontWeight: 600, color: "var(--gray-900)" }}>Studios Selected</div>
-            <div style={{ fontSize: "0.8rem", color: "var(--gray-500)", marginTop: "0.25rem" }}>
-              Total Base Rate
-            </div>
+function Step3({ data, onChange }) {
+  const [selectedDate, setSelectedDate] = useState(data.slots.length > 0 ? data.slots[0].date : (new Date().toISOString().split('T')[0]));
+  const [period, setPeriod] = useState("morning");
+  const [bookedSlots, setBookedSlots] = useState([]);
+  const [loading, setLoading] = useState(false);
+
+  useEffect(() => {
+    if (selectedDate && data.studios.length > 0) {
+      setLoading(true);
+      const promises = data.studios.map(s => getStudioAvailability(s?.id || s, selectedDate));
+      Promise.all(promises).then(results => {
+        const allBooked = results.flatMap(r => r.data.booked_slots || []);
+        setBookedSlots(allBooked);
+        setLoading(false);
+      }).catch(() => setLoading(false));
+    }
+  }, [selectedDate, data.studios]);
+
+  const addSlot = (timeRange) => {
+    const [start, end] = timeRange.split(' - ');
+    
+    if (data.slots.some(s => s.date === selectedDate && s.start_time === start)) {
+      alert("This slot is already added.");
+      return;
+    }
+
+    const newSlots = data.studios.map(s => {
+        const studioId = s?.id || s;
+        return {
+            studio_id: Number(studioId),
+            date: selectedDate,
+            start_time: start,
+            end_time: end,
+            price_per_hour: s?.price_per_hour || 0
+        };
+    });
+
+    onChange("slots", [...data.slots, ...newSlots]);
+  };
+
+  const removeSlot = (date, startTime) => {
+    onChange("slots", data.slots.filter(s => !(s.date === date && s.start_time === startTime)));
+  };
+
+  const displaySlots = [];
+  const seen = new Set();
+  data.slots.forEach(s => {
+    const key = `${s.date}_${s.start_time}`;
+    if (!seen.has(key)) {
+      seen.add(key);
+      displaySlots.push(s);
+    }
+  });
+
+  return (
+    <div className="animate-fadeUp">
+      <h2 className="heading-md" style={{ marginBottom: "0.5rem" }}>Schedule & Time Slots</h2>
+      <p className="body-sm" style={{ marginBottom: "2rem" }}>Select a date and choose your time slots.</p>
+
+      <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '2rem', marginBottom: '2.5rem' }}>
+        <div>
+          <Calendar selectedDate={selectedDate} onSelectDate={setSelectedDate} />
+        </div>
+        <div>
+          <h3 className="eyebrow" style={{ marginBottom: '1rem' }}>1. Select Period</h3>
+          <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
+            {TIME_SLOTS_PERIODS.map(p => (
+              <button 
+                key={p.id} 
+                className={`btn ${period === p.id ? 'btn-primary' : 'btn-outline'}`}
+                onClick={() => setPeriod(p.id)}
+                style={{ flex: 1, display: 'flex', flexDirection: 'column', gap: '0.25rem', padding: '0.75rem', height: 'auto' }}
+              >
+                <span style={{ fontSize: '1.2rem' }}>{p.icon}</span>
+                <span style={{ fontWeight: 700, fontSize: '0.85rem' }}>{p.label}</span>
+                <span style={{ fontSize: '0.65rem', opacity: 0.7 }}>{p.time}</span>
+              </button>
+            ))}
           </div>
-          <div style={{ textAlign: "right" }}>
-            <div style={{ fontSize: "1.5rem", fontWeight: 600, color: "var(--pink-500)", fontFamily: "'Cormorant Garamond',serif" }}>
-              MAD {totalPrice} <span style={{ fontSize: "0.85rem", color: "var(--gray-500)", fontFamily: "'DM Sans', sans-serif", fontWeight: 400 }}>/ hr</span>
+
+          <h3 className="eyebrow" style={{ marginBottom: '1rem' }}>2. Available Slots</h3>
+          {loading ? (
+             <div style={{ textAlign: 'center', padding: '2rem' }}><span className="spinner" /></div>
+          ) : (
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(100px, 1fr))', gap: '0.75rem' }}>
+              {SUB_SLOTS[period].map(timeRange => {
+                const [start, end] = timeRange.split(' - ');
+                const isBooked = bookedSlots.some(b => (start < b.end_time && end > b.start_time));
+                const isSelected = data.slots.some(s => s.date === selectedDate && s.start_time === start);
+
+                return (
+                  <button
+                    key={timeRange}
+                    disabled={isBooked}
+                    onClick={() => addSlot(timeRange)}
+                    className={`btn ${isSelected ? 'btn-primary' : isBooked ? 'btn-disabled' : 'btn-soft'}`}
+                    style={{ padding: '0.75rem 0.5rem', height: 'auto', display: 'flex', flexDirection: 'column' }}
+                  >
+                    <span style={{ fontWeight: 700 }}>{start}</span>
+                    <span style={{ fontSize: '0.6rem', opacity: 0.7 }}>to {end}</span>
+                    {isBooked && <span style={{ fontSize: '0.6rem', opacity: 0.8 }}>Reserved</span>}
+                  </button>
+                );
+              })}
             </div>
-          </div>
+          )}
+        </div>
+      </div>
+
+      <h3 className="eyebrow" style={{ marginBottom: '1rem' }}>Selected Slots</h3>
+      {displaySlots.length > 0 ? (
+        <div style={{ border: '1px solid var(--gray-200)', borderRadius: '16px', overflow: 'hidden' }}>
+          <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
+            <thead style={{ background: 'var(--gray-50)', borderBottom: '1px solid var(--gray-200)' }}>
+              <tr>
+                <th style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--gray-500)', fontWeight: 600 }}>Date</th>
+                <th style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--gray-500)', fontWeight: 600 }}>Time</th>
+                <th style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--gray-500)', fontWeight: 600, textAlign: 'right' }}>Action</th>
+              </tr>
+            </thead>
+            <tbody>
+              {displaySlots.map((s) => (
+                <tr key={`${s.date}-${s.start_time}`} style={{ borderBottom: '1px solid var(--gray-100)' }}>
+                  <td style={{ padding: '1rem', fontWeight: 500 }}>{s.date}</td>
+                  <td style={{ padding: '1rem' }}>{s.start_time} - {s.end_time}</td>
+                  <td style={{ padding: '1rem', textAlign: 'right' }}>
+                    <button className="btn btn-ghost btn-sm" style={{ color: 'var(--reserved)' }} onClick={() => removeSlot(s.date, s.start_time)}>
+                      <FaTrash />
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
+      ) : (
+        <div style={{ padding: '2rem', textAlign: 'center', background: 'var(--gray-50)', borderRadius: '16px', border: '1px dashed var(--gray-300)', color: 'var(--gray-400)' }}>
+          No slots selected. Please pick a date and time above.
         </div>
       )}
     </div>
   );
 }
 
-// Step 3 – Schedule
-function Step3({ data, onChange }) {
-  const today  = new Date();
-  const [vY, setVY] = useState(today.getFullYear());
-  const [vM, setVM] = useState(today.getMonth());
-  const first = new Date(vY, vM, 1).getDay();
-  const dim   = new Date(vY, vM + 1, 0).getDate();
-  const cells = [];
-  for (let i = 0; i < first; i++) cells.push(null);
-  for (let d = 1; d <= dim; d++) cells.push(d);
-  const todayStr = fmt(today.getFullYear(), today.getMonth(), today.getDate());
-
-  const [activeSession, setActiveSession] = useState(null);
-
-  const handleDateClick = (ds) => {
-    const dates = data.dates || [];
-    if (dates.includes(ds)) {
-      onChange("dates", dates.filter(d => d !== ds));
-    } else {
-      onChange("dates", [...dates, ds]);
-    }
-  };
-
-  const handleSessionClick = (id) => {
-    setActiveSession(prev => prev === id ? null : id);
-  };
-
-  const handleSpecificSlotClick = (slot) => {
-    const slots = data.timeSlots || [];
-    if (slots.includes(slot)) {
-      onChange("timeSlots", slots.filter(s => s !== slot));
-    } else {
-      onChange("timeSlots", [...slots, slot]);
-    }
-  };
-
-  const isSlotBookedForDate = (slot, sessionId, dateStr) => {
-    const { studios = [] } = data;
-    if (studios.length === 0) return false;
-    for (const s of studios) {
-      const hash = s.id + new Date(dateStr).getDate() + sessionId.length;
-      if (hash % 4 === 0) return true;
-      if (hash % 3 === 0) {
-          const allSlots = SUB_SLOTS[sessionId];
-          if (slot === allSlots[0] || slot === allSlots[allSlots.length - 1]) return true;
-      }
-      if (hash % 5 === 0) {
-          const allSlots = SUB_SLOTS[sessionId];
-          if (slot === allSlots[1]) return true;
-      }
-    }
-    return false;
-  };
-
-  const isSlotBooked = (slot, sessionId) => {
-    const { dates = [] } = data;
-    if (dates.length === 0) return false;
-    return dates.some(d => isSlotBookedForDate(slot, sessionId, d));
-  };
-
+function Step4({ data, onChange, totalPrice, totalHours }) {
   return (
     <div className="animate-fadeUp">
-      <h2 className="heading-md" style={{ marginBottom: "0.5rem" }}>Pick Dates & Times</h2>
-      <p className="body-sm" style={{ marginBottom: "2rem" }}>Choose your preferred session dates.</p>
+      <h2 className="heading-md" style={{ marginBottom: "0.5rem" }}>Confirm Identity</h2>
+      <p className="body-sm" style={{ marginBottom: "2.5rem" }}>Please provide your details to finalize the booking.</p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "1fr", gap: "2rem" }}>
-        {/* Calendar */}
-        <div className="calendar-card" style={{ maxWidth: 320, margin: "0 auto", width: "100%" }}>
-          <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", padding: "1rem 1.25rem", borderBottom: "1px solid var(--pink-50)", background: "var(--white)" }}>
-            <button className="btn btn-outline" style={{ width: 32, height: 32, padding: 0 }} onClick={() => vM === 0 ? (setVM(11), setVY(y => y - 1)) : setVM(m => m - 1)}>
-              ‹
-            </button>
-            <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.1rem", fontWeight: 600, color: "var(--gray-900)" }}>{MONTHS[vM]} {vY}</span>
-            <button className="btn btn-outline" style={{ width: 32, height: 32, padding: 0 }} onClick={() => vM === 11 ? (setVM(0), setVY(y => y + 1)) : setVM(m => m + 1)}>
-              ›
-            </button>
+      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+        <div className="field">
+          <label className="field-label">Full Name</label>
+          <div style={{ position: 'relative' }}>
+            <FaUser style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
+            <input className="field-input" style={{ paddingLeft: '2.8rem' }} value={data.name} onChange={e => onChange("name", e.target.value)} placeholder="John Doe" />
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", padding: "0.5rem 1rem", borderBottom: "1px solid var(--pink-50)" }}>
-            {WDAYS.map(d => <div key={d} className="eyebrow" style={{ textAlign: "center", margin: 0, color: "var(--gray-500)" }}>{d}</div>)}
+        </div>
+        <div className="field">
+          <label className="field-label">Email Address</label>
+          <div style={{ position: 'relative' }}>
+            <FaEnvelope style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
+            <input className="field-input" style={{ paddingLeft: '2.8rem' }} value={data.email} onChange={e => onChange("email", e.target.value)} placeholder="john@example.com" />
           </div>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(7,1fr)", padding: "1rem", gap: "4px" }}>
-            {cells.map((day, i) => {
-              if (!day) return <div key={`e${i}`} />;
-              const ds = fmt(vY, vM, day);
-              const isPast = ds < todayStr, isSel = (data.dates || []).includes(ds);
-              
-              let allBooked = false;
-              let hasData = false;
-              if (!isPast && data.studios && data.studios.length > 0) {
-                  hasData = true;
-                  let total = 0;
-                  let booked = 0;
-                  for (const session of TIME_SLOTS) {
-                      for (const slot of SUB_SLOTS[session.id]) {
-                          total++;
-                          if (isSlotBookedForDate(slot, session.id, ds)) booked++;
-                      }
-                  }
-                  allBooked = (booked === total);
-              }
-
-              let classes = "calendar-day";
-              if (isPast) classes += " past";
-              if (isSel) classes += " selected";
-
-              return (
-                <div key={day} className={classes} onClick={() => !isPast && handleDateClick(ds)}>
-                  {day}
-                  {hasData && !isSel && (
-                    <span className={`dot ${allBooked ? "dot-reserved" : "dot-available"}`} style={{ position: "absolute", bottom: "10%" }} />
-                  )}
-                </div>
-              );
-            })}
-          </div>
-          {/* Legend */}
-          <div style={{ padding: "0.85rem", display: "flex", gap: "1rem", justifyContent: "center", borderTop: "1px solid var(--pink-50)", background: "var(--pink-50)" }}>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-               <span className="dot dot-available" />
-               <span style={{ fontSize: "0.75rem", color: "var(--gray-700)", fontWeight: 500 }}>Available</span>
-            </div>
-            <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
-               <span className="dot dot-reserved" />
-               <span style={{ fontSize: "0.75rem", color: "var(--gray-700)", fontWeight: 500 }}>Reserved</span>
-            </div>
+        </div>
+        <div className="field">
+          <label className="field-label">Phone Number</label>
+          <div style={{ position: 'relative' }}>
+            <FaPhone style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
+            <input className="field-input" style={{ paddingLeft: '2.8rem' }} value={data.phone} onChange={e => onChange("phone", e.target.value)} placeholder="+212 ..." />
           </div>
         </div>
 
-        {/* Time slots */}
-        <div>
-          <h4 className="eyebrow" style={{ marginBottom: "1rem" }}>Time Slots</h4>
-          <div style={{ display: "grid", gridTemplateColumns: "repeat(3,1fr)", gap: "1rem", marginBottom: activeSession ? "1.5rem" : 0 }}>
-            {TIME_SLOTS.map(ts => {
-              const sel = activeSession === ts.id;
-              const hasSelectedSubSlots = (data.timeSlots || []).some(slot => SUB_SLOTS[ts.id]?.includes(slot));
-              return (
-                <div key={ts.id} onClick={() => handleSessionClick(ts.id)}
-                  style={{
-                    position: "relative",
-                    borderRadius: "var(--r-md)", padding: "1rem 0.5rem", textAlign: "center", cursor: "pointer",
-                    border: `1.5px solid ${sel || hasSelectedSubSlots ? "var(--pink-400)" : "var(--gray-200)"}`,
-                    background: sel || hasSelectedSubSlots ? "var(--pink-50)" : "var(--white)",
-                    transition: "all var(--t-fast)",
-                    boxShadow: sel ? "var(--shadow-xs)" : "none"
-                  }}>
-                  <div style={{ fontSize: "1.75rem", marginBottom: "0.5rem" }}>{ts.icon}</div>
-                  <div style={{ fontSize: "0.85rem", fontWeight: 600, color: sel || hasSelectedSubSlots ? "var(--pink-500)" : "var(--gray-900)" }}>{ts.label}</div>
-                  <div style={{ fontSize: "0.7rem", color: "var(--gray-500)", marginTop: "0.2rem" }}>{ts.time}</div>
-                  {hasSelectedSubSlots && (
-                     <div style={{ position: "absolute", top: -8, right: -8, background: "var(--pink-500)", color: "#fff", borderRadius: "50%", width: 22, height: 22, fontSize: "0.75rem", display: "flex", alignItems: "center", justifyContent: "center", border: "2px solid #fff", boxShadow: "var(--shadow-sm)" }}>
-                        ✓
-                     </div>
-                  )}
-                </div>
-              );
-            })}
-          </div>
-
-          {activeSession && SUB_SLOTS[activeSession] && (() => {
-            const allSlots = SUB_SLOTS[activeSession];
-            const slotsStatus = allSlots.map(slot => ({
-              slot,
-              booked: isSlotBooked(slot, activeSession)
-            }));
-            
-            const allBooked = slotsStatus.length > 0 && slotsStatus.every(s => s.booked);
-
-            return (
-              <div className="animate-fadeIn">
-                 <h4 className="eyebrow" style={{ marginBottom: "1rem" }}>Select Specific Times</h4>
-                 {allBooked ? (
-                    <div style={{ padding: "1.5rem", background: "var(--reserved-bg)", border: "1px solid var(--reserved-border)", borderRadius: "var(--r-sm)", color: "var(--reserved)", fontSize: "0.9rem", textAlign: "center", fontWeight: 500 }}>
-                      No available slots for the selected studios on these dates. Please choose another date or studio.
-                    </div>
-                 ) : (
-                    <div style={{ display: "grid", gridTemplateColumns: "repeat(2,1fr)", gap: "0.75rem" }}>
-                      {slotsStatus.map(({ slot, booked }) => {
-                         const isSlotSel = (data.timeSlots || []).includes(slot);
-                         return (
-                            <div key={slot} onClick={() => !booked && handleSpecificSlotClick(slot)}
-                              style={{
-                                borderRadius: "var(--r-sm)", padding: "0.75rem", textAlign: "center", 
-                                cursor: booked ? "not-allowed" : "pointer",
-                                border: `1.5px solid ${booked ? "var(--gray-200)" : isSlotSel ? "var(--pink-400)" : "var(--gray-200)"}`,
-                                background: booked ? "var(--gray-50)" : isSlotSel ? "var(--grad-cta)" : "var(--white)",
-                                color: booked ? "var(--gray-400)" : isSlotSel ? "var(--white)" : "var(--gray-900)",
-                                fontSize: "0.85rem", fontWeight: 600,
-                                transition: "all var(--t-fast)",
-                                display: "flex", flexDirection: "column", alignItems: "center", gap: "0.3rem",
-                                boxShadow: isSlotSel ? "var(--shadow-xs)" : "none"
-                              }}
-                            >
-                               {slot}
-                               {booked && <span style={{ fontSize: "0.65rem", color: "var(--reserved)", background: "var(--reserved-bg)", padding: "0.15rem 0.5rem", borderRadius: 50, border: "1px solid var(--reserved-border)", fontWeight: 500 }}>Reserved</span>}
-                            </div>
-                         )
-                      })}
-                    </div>
-                 )}
-              </div>
-            );
-          })()}
+        <div style={{ marginTop: '1rem', padding: '1.5rem', background: 'var(--gray-50)', borderRadius: '16px', border: '1px solid var(--gray-200)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
+                <span style={{ fontSize: '0.9rem', color: 'var(--gray-500)' }}>Total Studios</span>
+                <span style={{ fontWeight: 700 }}>{data.studios.length}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
+                <span style={{ fontSize: '0.9rem', color: 'var(--gray-500)' }}>Total Hours</span>
+                <span style={{ fontWeight: 700 }}>{totalHours}</span>
+            </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '1rem', borderTop: '1.5px dashed var(--gray-300)' }}>
+                <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>Total Price</span>
+                <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--pink-500)' }}>MAD {totalPrice}</span>
+            </div>
         </div>
       </div>
     </div>
   );
 }
-
-// Step 4 – Basic Info
-function Step4({ data, onChange, errors }) {
-  const fields = [
-    ["name",  "Full Name",      "text",  "Amina El Fassi"],
-    ["email", "Email Address",  "email", "amina@example.com"],
-    ["phone", "Phone Number",   "tel",   "+212 6XX-XXXXXX"],
-  ];
-  return (
-    <div className="animate-fadeUp">
-      <h2 className="heading-md" style={{ marginBottom: "0.5rem" }}>Your Information</h2>
-      <p className="body-sm" style={{ marginBottom: "2rem" }}>We'll use this to confirm your booking.</p>
-
-      <div style={{ display: "flex", flexDirection: "column", gap: "1.25rem" }}>
-        {fields.map(([key, label, type, ph]) => (
-          <div key={key} className="field">
-            <label className="field-label">{label}</label>
-            <input
-              className={`field-input${errors[key] ? " has-error" : ""}`}
-              type={type} placeholder={ph} value={data[key]}
-              onChange={e => onChange(key, e.target.value)}
-            />
-            {errors[key] && <span className="field-error">{errors[key]}</span>}
-          </div>
-        ))}
-      </div>
-
-      <div style={{
-        background: "var(--pink-50)", borderRadius: "var(--r-md)", padding: "1rem 1.25rem",
-        marginTop: "2rem", border: "1px solid var(--pink-200)",
-        display: "flex", gap: "0.75rem", alignItems: "flex-start",
-      }}>
-        <span style={{ fontSize: "1.1rem" }}>🔒</span>
-        <p style={{ fontSize: "0.8rem", color: "var(--gray-700)", lineHeight: 1.6, margin: 0 }}>
-          Your info is securely handled. We never share your personal data with third parties.
-        </p>
-      </div>
-    </div>
-  );
-}
-
-// Step 5 – Confirmation
-function Step5({ data, total, reservationId, onClose }) {
-  const tsLabel = (data.timeSlots || []).map(id => TIME_SLOTS.find(t => t.id === id)?.label || id).join(", ") || (data.timeSlots || []).join(", ");
-  const date = data.dates && data.dates.length > 0 
-    ? data.dates.map(d => new Date(d + "T00:00:00").toLocaleDateString("en-US", { month: "short", day: "numeric" })).join(", ") 
-    : "—";
-  const studioNames = data.studios && data.studios.length > 0 ? data.studios.map(s => s.name).join(", ") : "—";
-  const serviceTypeLabel = SERVICES.find(s => s.id === data.serviceType)?.label || "Studio Only";
-  
-  const rows = [
-    ["Reservation ID", reservationId || "—"],
-    ["Service",        serviceTypeLabel],
-    ["Studios",        studioNames],
-  ];
-
-  if (data.equipment && data.equipment.length > 0) rows.push(["Equipment", data.equipment.join(", ")]);
-  if (data.team && data.team.length > 0) rows.push(["Team", data.team.join(", ")]);
-
-  rows.push(
-    ["Dates",          date],
-    ["Time Slots",     tsLabel],
-    ["Guest",          data.name],
-    ["Email",          data.email],
-    ["Phone",          data.phone],
-  );
-
-  return (
-    <div className="animate-fadeUp" style={{ textAlign: "center" }}>
-      {/* Success badge */}
-      <div style={{
-        margin: "0 auto 1.5rem",
-        width: 80, height: 80, borderRadius: "50%",
-        background: "var(--grad-cta)",
-        display: "flex", alignItems: "center", justifyContent: "center",
-        fontSize: "2.5rem", color: "#fff",
-        boxShadow: "var(--shadow-md)",
-        animation: "float 3s ease-in-out infinite",
-      }}>✓</div>
-
-      <h2 className="heading-lg" style={{ marginBottom: "0.5rem" }}>You're All Set!</h2>
-      <p className="body-md" style={{ marginBottom: "2rem", maxWidth: 400, margin: "0 auto 2rem" }}>
-        Booking confirmed! A confirmation has been sent to <strong style={{ color: "var(--pink-500)" }}>{data.email}</strong>.
-      </p>
-
-      {/* Summary card */}
-      <div style={{ background: "var(--white)", borderRadius: "var(--r-md)", border: "1.5px solid var(--pink-100)", marginBottom: "2rem", textAlign: "left", overflow: "hidden", boxShadow: "var(--shadow-sm)" }}>
-        <div style={{ padding: "1rem 1.5rem", background: "var(--pink-50)", borderBottom: "1px solid var(--pink-100)" }}>
-          <span style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.2rem", color: "var(--gray-900)", fontWeight: 600 }}>Booking Summary</span>
-        </div>
-        <div style={{ padding: "0.5rem 0" }}>
-          {rows.map(([label, value]) => (
-            <div key={label} style={{ display: "flex", justifyContent: "space-between", padding: "0.75rem 1.5rem", borderBottom: "1px solid var(--pink-50)" }}>
-              <span style={{ fontSize: "0.85rem", color: "var(--gray-500)", fontWeight: 500 }}>{label}</span>
-              <span style={{ fontSize: "0.85rem", color: "var(--gray-900)", fontWeight: 600, textAlign: "right", maxWidth: "60%" }}>{value}</span>
-            </div>
-          ))}
-          <div style={{ display: "flex", justifyContent: "space-between", padding: "1rem 1.5rem", background: "var(--pink-50)" }}>
-             <span style={{ fontSize: "1rem", color: "var(--gray-900)", fontWeight: 600 }}>Total</span>
-             <span style={{ fontSize: "1.2rem", color: "var(--pink-500)", fontFamily: "'Cormorant Garamond',serif", fontWeight: 600 }}>MAD {total}</span>
-          </div>
-        </div>
-      </div>
-
-      <div style={{ display: "flex", gap: "1rem", justifyContent: "center" }}>
-        <button className="btn btn-outline btn-lg" onClick={onClose}>Done</button>
-        <button className="btn btn-soft btn-lg" onClick={() => window.print?.()}>🖨 Print</button>
-      </div>
-      <p style={{ fontSize: "0.8rem", color: "var(--gray-400)", marginTop: "2rem", fontWeight: 500 }}>✦ Thank you for choosing TechStudio ✦</p>
-    </div>
-  );
-}
-
-// ── Main Component ─────────────────────────────────────────────
-
-const INIT = { serviceType: "studio", equipment: [], team: [], studios: [], dates: [], timeSlots: [], name: "", email: "", phone: "" };
 
 export default function ReservationForm({ preselectedStudio, preselectedDate, onClose }) {
-  const [step, setStep]   = useState(1);
-  const [data, setData]   = useState({
-    ...INIT,
-    studios: preselectedStudio ? [preselectedStudio] : [],
-    dates:  preselectedDate ? [preselectedDate] : [],
+  const [step, setStep] = useState(1);
+  const [data, setData] = useState({
+    serviceType: "studio", equipment: [], team: [], 
+    studios: preselectedStudio ? [preselectedStudio] : [], 
+    slots: [], name: "", email: "", phone: ""
   });
-  const [errors,  setErrors]  = useState({});
+  const [studios, setStudios] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [resId,   setResId]   = useState(null);
-  const [studiosList, setStudiosList] = useState([]);
+  const [resId, setResId] = useState(null);
 
   useEffect(() => {
-    getStudios().then(res => setStudiosList(res?.data || res || [])).catch(() => setStudiosList([]));
+    getStudios().then(res => {
+        const fetched = res?.data || res || [];
+        setStudios(fetched);
+        
+        // If preselectedStudio was just an ID, map it to the full object
+        setData(p => {
+            if (p.studios.length === 1 && (typeof p.studios[0] === 'number' || typeof p.studios[0] === 'string')) {
+                const found = fetched.find(s => String(s.id) === String(p.studios[0]));
+                if (found) return { ...p, studios: [found] };
+            }
+            return p;
+        });
+    });
   }, []);
 
-  const update = useCallback((key, val) => {
-    setData(p => ({ ...p, [key]: val }));
-    setErrors(p => ({ ...p, [key]: "" }));
-  }, []);
+  const update = (key, val) => setData(p => ({ ...p, [key]: val }));
 
-  const total = (data.studios || []).reduce((sum, s) => sum + Number(s.price_per_hour || 0), 0);
+  const totalDurationAndPrice = useMemo(() => {
+    let totalHours = 0;
+    let totalPrice = 0;
+    data.slots.forEach(slot => {
+      const h1 = parseInt(slot.start_time.split(':')[0]);
+      const h2 = parseInt(slot.end_time.split(':')[0]);
+      const diff = h2 - h1;
+      totalHours += diff;
+      totalPrice += diff * (Number(slot.price_per_hour) || 0);
+    });
+    return { totalHours, totalPrice };
+  }, [data.slots]);
 
-  const validate = () => {
-    const e = {};
-    if (step === 1) {
-      if (!data.serviceType) e.serviceType = "Please select a service type.";
-    } else if (step === 2) {
-      if (!data.studios || data.studios.length === 0) e.studios = "Please select at least one studio.";
-    } else if (step === 3) {
-      if (!data.dates || data.dates.length === 0) e.dates = "Please select at least one date.";
-      if (!data.timeSlots || data.timeSlots.length === 0) e.timeSlots = "Please choose at least one time slot.";
-    } else if (step === 4) {
-      if (!data.name.trim())  e.name  = "Full name is required.";
-      if (!data.email.trim() || !/\S+@\S+\.\S+/.test(data.email)) e.email = "Valid email required.";
-      if (!data.phone.trim() || data.phone.length < 8) e.phone = "Valid phone required.";
-    }
-    setErrors(e);
-    return Object.keys(e).length === 0;
-  };
+  const { totalHours, totalPrice } = totalDurationAndPrice;
 
   const handleNext = async () => {
-    if (!validate()) return;
     if (step === 4) {
-      // Submit
+      if (!data.name || !data.email || !data.phone) {
+        alert("Please fill in all contact details.");
+        return;
+      }
       setLoading(true);
       try {
-        const res = await createReservation({
-          service_type: data.serviceType, equipment: data.equipment, team: data.team,
-          studio_ids: data.studios.map(s => s.id), dates: data.dates,
-          time_slots: data.timeSlots,
-          name: data.name, email: data.email, phone: data.phone,
-        });
-        setResId(res?.data?.id || res?.id || `TS-${Date.now()}`);
-      } catch {
-        setResId(`TS-${Date.now()}`); // demo fallback
+        const payload = {
+          service_type: data.serviceType,
+          equipment: data.equipment || [],
+          team: data.team || [],
+          name: data.name,
+          email: data.email,
+          phone: data.phone,
+          studio_ids: data.studios.map(s => Number(s?.id || s)),
+          slots: data.slots.map(s => ({
+            studio_id: Number(s.studio_id),
+            date: s.date,
+            start_time: s.start_time,
+            end_time: s.end_time
+          }))
+        };
+
+        console.log("Reservation Payload:", payload);
+
+        const res = await createReservation(payload);
+        setResId(res.data?.booking_reference || res.booking_reference || res.data?.id);
+        setStep(5);
+      } catch (err) {
+        console.error("Reservation Error:", err);
+        alert(err.message || "Booking failed.");
       } finally {
         setLoading(false);
       }
+    } else {
+      if (step === 2 && data.studios.length === 0) {
+        alert("Please select at least one studio.");
+        return;
+      }
+      if (step === 3 && data.slots.length === 0) {
+        alert("Please select at least one time slot.");
+        return;
+      }
+      setStep(step + 1);
     }
-    setStep(s => s + 1);
   };
 
-  const progress = ((step - 1) / 4) * 100;
-
   return (
-    <div className="modal-overlay" onClick={e => e.target === e.currentTarget && step < 5 && onClose()}>
-      <div className="modal-panel" style={{ position: "relative", maxWidth: 760 }}>
-        {/* ── Header ── */}
-        <div style={{
-          display: "flex", alignItems: "center", justifyContent: "space-between",
-          padding: "1.25rem 2rem", borderBottom: "1px solid var(--pink-100)",
-        }}>
-          <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "1.2rem", color: "var(--gray-900)" }}>
-            Tech<em style={{ fontStyle: "italic", color: "var(--pink-500)" }}>Studio</em>
-            <span style={{ marginLeft: "0.75rem", fontSize: "0.8rem", color: "var(--gray-500)", fontFamily: "'DM Sans',sans-serif", fontStyle: "normal", letterSpacing: "0.05em", textTransform: "uppercase" }}>Reservation</span>
-          </div>
-          {step < 5 && (
-            <button className="btn btn-outline" onClick={onClose} style={{ width: 36, height: 36, padding: 0, borderRadius: "50%" }}>
-              ✕
-            </button>
-          )}
-        </div>
-
-        {/* ── Progress bar ── */}
-        {step < 5 && (
-          <div className="wizard-progress">
-            <div className="wizard-progress-fill" style={{ width: `${progress}%` }} />
-          </div>
-        )}
-
-        {/* ── Step indicators ── */}
-        {step < 5 && (
-          <div style={{ padding: "1.5rem 2rem 0", display: "flex", justifyContent: "space-between" }}>
-            {[1, 2, 3, 4, 5].map(s => <StepPill key={s} step={s} current={step} />)}
-          </div>
-        )}
-
-        {/* ── Content ── */}
-        <div style={{ padding: "2rem" }}>
-          {step === 1 && <Step1 data={data} onChange={update} />}
-          {step === 2 && <Step2 data={data} onChange={update} studios={studiosList} />}
-          {step === 3 && <Step3 data={data} onChange={update} />}
-          {step === 4 && <Step4 data={data} onChange={update} errors={errors} />}
-          {step === 5 && <Step5 data={data} total={total} reservationId={resId} onClose={onClose} />}
-
-          {/* Errors */}
-          {(errors.serviceType || errors.studios || errors.dates || errors.timeSlots) && (
-            <div style={{ marginTop: "1rem", padding: "0.75rem 1rem", background: "var(--reserved-bg)", border: "1px solid var(--reserved-border)", borderRadius: "var(--r-sm)" }}>
-              <p className="field-error" style={{ margin: 0, fontWeight: 500 }}>
-                {errors.serviceType || errors.studios || errors.dates || errors.timeSlots}
-              </p>
-            </div>
-          )}
-
-          {/* Nav */}
-          {step < 5 && (
-            <div style={{ display: "flex", justifyContent: "space-between", marginTop: "2rem", paddingTop: "1.5rem", borderTop: "1px solid var(--gray-100)" }}>
-              {step > 1
-                ? <button className="btn btn-outline btn-lg" onClick={() => setStep(s => s - 1)}>← Back</button>
-                : <div />
-              }
-              <button className="btn btn-primary btn-lg"
-                onClick={handleNext}
-                disabled={loading}
-                style={{ minWidth: 160 }}
-              >
-                {loading
-                  ? <span style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}><span className="spinner" />Saving…</span>
-                  : step === 4
-                  ? "Confirm Booking ✦"
-                  : "Continue →"
-                }
-              </button>
-            </div>
-          )}
-        </div>
+    <Modal isOpen={true} onClose={onClose} title={step === 5 ? "Booking Confirmed" : "Studio Reservation"} maxWidth="900px">
+      <div style={{ display: 'flex', gap: '1rem', marginBottom: '2.5rem', padding: '0 1rem' }}>
+        {[1, 2, 3, 4].map(s => <StepPill key={s} step={s} current={step} />)}
       </div>
-    </div>
+
+      <div style={{ minHeight: '400px' }}>
+        {step === 1 && <Step1 data={data} onChange={update} />}
+        {step === 2 && <Step2 data={data} onChange={update} studios={studios} />}
+        {step === 3 && <Step3 data={data} onChange={update} />}
+        {step === 4 && <Step4 data={data} onChange={update} totalPrice={totalPrice} totalHours={totalHours} />}
+        
+        {step === 5 && (
+          <div className="animate-fadeUp" style={{ textAlign: 'center', padding: '2rem 0' }}>
+            <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--grad-cta)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', margin: '0 auto 2rem' }}>
+              <FaCheck />
+            </div>
+            <h2 className="heading-lg">Thank You!</h2>
+            <p className="body-md">Your reservation <strong>#{resId}</strong> has been successfully placed.</p>
+            <button className="btn btn-primary btn-lg" style={{ marginTop: '2.5rem' }} onClick={onClose}>Finish & Close</button>
+          </div>
+        )}
+      </div>
+
+      {step < 5 && (
+        <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid var(--gray-100)' }}>
+          <button className="btn btn-outline" onClick={() => step === 1 ? onClose() : setStep(step - 1)}>
+            <FaArrowLeft /> {step === 1 ? 'Cancel' : 'Back'}
+          </button>
+          <button className="btn btn-primary btn-lg" onClick={handleNext} disabled={loading}>
+            {loading ? 'Processing...' : step === 4 ? 'Confirm Reservation' : 'Continue'} <FaArrowRight />
+          </button>
+        </div>
+      )}
+    </Modal>
   );
 }

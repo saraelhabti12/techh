@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import StudioCard from "./StudioCard";
+import Modal from "./Modal";
 import { getStudios } from "../api/studioApi";
 
 /**
@@ -18,7 +19,6 @@ export default function StudioList({ selectedDate, availability, onBook }) {
   const [loading, setLoading]   = useState(true);
 
   useEffect(() => {
-    // Fetches all studios when the component mounts, ensuring studios are displayed by default.
     setLoading(true);
     getStudios()
       .then(res => {
@@ -29,19 +29,14 @@ export default function StudioList({ selectedDate, availability, onBook }) {
         setStudios([]);
         setLoading(false);
       });
-  }, []); // Empty dependency array means this runs once on mount
+  }, []);
 
-  // Helper to find availability for a given studio ID from the `availability` prop.
   const avail = (studioId) => availability?.find(a => a.studio_id === studioId);
-
-  // Compute counts
   const availableCount = availability ? availability.filter(a => a.status === "available").length : 0;
   const reservedCount = availability ? availability.filter(a => a.status === "reserved").length : 0;
 
   return (
     <div id="studios">
-      {/* Date banner - Renders only when a date is selected. */}
-      {/* This section displays availability information for the selected date. */}
       {selectedDate && (
         <div className="availability-banner animate-fadeIn">
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
@@ -67,14 +62,12 @@ export default function StudioList({ selectedDate, availability, onBook }) {
         </div>
       )}
 
-      {/* Studio grid */}
       <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
         gap: "1.5rem",
       }}>
         {loading ? (
-          // Simple Skeleton loader for cards
           Array.from({ length: 4 }).map((_, i) => (
              <div key={i} className="studio-card" style={{ height: 420 }}>
                <div className="studio-card-img-wrapper" style={{ background: "var(--gray-100)", animation: "pulse 1.5s infinite" }} />
@@ -105,14 +98,11 @@ export default function StudioList({ selectedDate, availability, onBook }) {
       </div>
 
       {/* ── Detail Modal ── */}
-      {detail && (
-        <div
-          className="modal-overlay"
-          onClick={e => e.target === e.currentTarget && setDetail(null)}
-        >
-          <div className="modal-panel" style={{ maxWidth: 720 }}>
-            {/* Hero image with gallery dots */}
-            <div style={{ position: "relative", height: 340, overflow: "hidden", borderRadius: "var(--r-xl) var(--r-xl) 0 0" }}>
+      <Modal isOpen={!!detail} onClose={() => setDetail(null)} maxWidth="850px">
+        {detail && (
+          <div className="animate-fadeIn">
+            {/* Hero Image */}
+            <div style={{ position: "relative", height: 380, overflow: "hidden", borderRadius: "16px", marginBottom: "2rem" }}>
               <img
                 src={detail.gallery?.[imgIdx] || detail.image}
                 alt={detail.name}
@@ -120,19 +110,19 @@ export default function StudioList({ selectedDate, availability, onBook }) {
               />
               <div style={{
                 position: "absolute", inset: 0,
-                background: "linear-gradient(to top, rgba(0,0,0,0.5) 0%, transparent 60%)",
+                background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)",
               }} />
 
-              {/* Gallery dots */}
+              {/* Gallery navigation dots */}
               {detail.gallery?.length > 1 && (
                 <div style={{
-                  position: "absolute", bottom: 16, left: "50%", transform: "translateX(-50%)",
-                  display: "flex", gap: "0.5rem",
+                  position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)",
+                  display: "flex", gap: "0.6rem",
                 }}>
                   {detail.gallery.map((_, i) => (
                     <button key={i} onClick={() => setImgIdx(i)} style={{
-                      width: i === imgIdx ? 24 : 8, height: 8, borderRadius: 50,
-                      background: i === imgIdx ? "#fff" : "rgba(255,255,255,0.6)",
+                      width: i === imgIdx ? 28 : 10, height: 10, borderRadius: 50,
+                      background: i === imgIdx ? "#fff" : "rgba(255,255,255,0.5)",
                       border: "none", cursor: "pointer", transition: "all 0.3s ease",
                       padding: 0,
                     }} />
@@ -140,73 +130,63 @@ export default function StudioList({ selectedDate, availability, onBook }) {
                 </div>
               )}
 
-              {/* Close button */}
-              <button
-                onClick={() => setDetail(null)}
-                style={{
-                  position: "absolute", top: 16, right: 16,
-                  background: "rgba(255,255,255,0.9)", backdropFilter: "blur(8px)",
-                  border: "none", borderRadius: "50%",
-                  width: 36, height: 36, cursor: "pointer", fontSize: "1.1rem",
-                  display: "flex", alignItems: "center", justifyContent: "center", color: "var(--gray-900)",
-                  transition: "background 0.2s"
-                }}
-                onMouseEnter={e => e.currentTarget.style.background = "#fff"}
-                onMouseLeave={e => e.currentTarget.style.background = "rgba(255,255,255,0.9)"}
-              >✕</button>
-
-              {/* Name on image */}
-              <div style={{ position: "absolute", bottom: 24, left: 24 }}>
-                <div className="heading-lg" style={{ color: "#fff", marginBottom: "0.2rem" }}>{detail.name}</div>
-                <div style={{ fontSize: "0.9rem", color: "rgba(255,255,255,0.85)", fontWeight: 500 }}>{detail.tagline}</div>
+              {/* Title on image */}
+              <div style={{ position: "absolute", bottom: 30, left: 30 }}>
+                <h2 className="font-display" style={{ color: "#fff", marginBottom: "0.4rem", fontSize: "2.5rem", lineHeight: 1 }}>{detail.name}</h2>
+                <div style={{ fontSize: "1rem", color: "rgba(255,255,255,0.9)", fontWeight: 500 }}>{detail.tagline}</div>
               </div>
             </div>
 
-            {/* Body */}
-            <div style={{ padding: "2rem" }}>
-              <div style={{
-                display: "flex", alignItems: "center", justifyContent: "space-between",
-                marginBottom: "1.5rem", flexWrap: "wrap", gap: "1rem",
-              }}>
-                <div>
-                  <span className="heading-lg" style={{ color: detail.color || "var(--pink-500)", fontWeight: 600 }}>MAD {detail.price_per_hour}</span>
-                  <span style={{ fontSize: "0.85rem", color: "var(--gray-500)", marginLeft: "0.25rem" }}>/ hour</span>
-                  <span style={{ fontSize: "0.8rem", color: "var(--gray-400)", marginLeft: "0.75rem", borderLeft: "1px solid var(--gray-300)", paddingLeft: "0.75rem" }}>
-                    Min {detail.min_hours}h
-                  </span>
-                </div>
-                <span className="tag tag-available" style={{ fontSize: "0.8rem", padding: "0.4rem 1rem" }}>
-                  <span className="dot dot-available" style={{ background: "var(--available)" }} /> Available
+            {/* Info Section */}
+            <div style={{
+              display: "flex", alignItems: "center", justifyContent: "space-between",
+              marginBottom: "2.5rem", flexWrap: "wrap", gap: "1.5rem",
+            }}>
+              <div>
+                <span style={{ fontSize: "2rem", color: "var(--gray-900)", fontWeight: 800 }}>MAD {detail.price_per_hour}</span>
+                <span style={{ fontSize: "1rem", color: "var(--gray-500)", marginLeft: "0.4rem" }}>/ hour</span>
+                <span style={{ fontSize: "0.9rem", color: "var(--gray-200)", margin: "0 1.5rem" }}>|</span>
+                <span style={{ fontSize: "1rem", color: "var(--gray-600)", fontWeight: 500 }}>
+                  Min {detail.min_hours}h session
                 </span>
               </div>
+              <span className="tag" style={{ background: 'var(--available-bg)', color: 'var(--available)', fontSize: "0.9rem", padding: "0.6rem 1.2rem", borderRadius: "12px", fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span className="dot" style={{ background: "var(--available)", width: 8, height: 8 }} /> Available Now
+              </span>
+            </div>
 
-              <p className="body-md" style={{ marginBottom: "2rem" }}>
+            <div style={{ marginBottom: "2.5rem" }}>
+              <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray-400)', marginBottom: '1rem', fontWeight: 800 }}>About this space</h4>
+              <p style={{ fontSize: "1.1rem", lineHeight: "1.8", color: "var(--gray-700)", fontWeight: 400 }}>
                 {detail.description}
               </p>
+            </div>
 
-              <h4 className="eyebrow" style={{ marginBottom: "1rem" }}>What's Included</h4>
-              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.6rem", marginBottom: "2.5rem" }}>
+            <div style={{ marginBottom: "3rem" }}>
+              <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray-400)', marginBottom: '1.25rem', fontWeight: 800 }}>Included Amenities</h4>
+              <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
                  {(detail.features || []).map(f => (
-                  <span key={f} className="tag tag-pink" style={{ padding: "0.4rem 1rem", fontSize: "0.8rem" }}>
+                  <span key={f} style={{ padding: "0.6rem 1.25rem", fontSize: "0.9rem", background: "var(--gray-50)", color: "var(--gray-700)", border: "1px solid var(--gray-100)", borderRadius: "12px", fontWeight: 600 }}>
                     ✓ {f}
                   </span>
                 ))}
               </div>
+            </div>
 
-              <div style={{ display: "flex", gap: "1rem" }}>
-                <button className="btn btn-outline btn-lg" style={{ flex: 1 }} onClick={() => setDetail(null)}>Close</button>
-                <button
-                  className="btn btn-primary btn-lg"
-                  style={{ flex: 2 }}
-                  onClick={() => { setDetail(null); onBook?.(detail); }}
-                >
-                  Book This Studio →
-                </button>
-              </div>
+            {/* Actions */}
+            <div style={{ display: "flex", gap: "1.25rem", paddingTop: '1.5rem', borderTop: '1px solid var(--gray-100)' }}>
+              <button className="btn btn-outline" style={{ flex: 1, height: "56px", borderRadius: "14px" }} onClick={() => setDetail(null)}>Close</button>
+              <button
+                className="btn btn-primary"
+                style={{ flex: 2, height: "56px", borderRadius: "14px", fontSize: "1.1rem" }}
+                onClick={() => { setDetail(null); onBook?.(detail); }}
+              >
+                Book This Studio Now →
+              </button>
             </div>
           </div>
-        </div>
-      )}
+        )}
+      </Modal>
     </div>
   );
 }

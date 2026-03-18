@@ -1,7 +1,10 @@
 import React from 'react';
 import { useNavigate, NavLink } from 'react-router-dom';
 import { useAuth } from '../../App';
-import { FaUser, FaCalendarAlt, FaStar, FaBell, FaSignOutAlt, FaPlusSquare, FaThLarge } from 'react-icons/fa';
+import { 
+    FaUser, FaCalendarAlt, FaStar, FaBell, FaSignOutAlt, 
+    FaPlusSquare, FaThLarge, FaChartBar, FaBuilding, FaUsers 
+} from 'react-icons/fa';
 
 const DashboardLayout = ({ children }) => {
     const { user, loading, logoutUser } = useAuth();
@@ -25,37 +28,48 @@ const DashboardLayout = ({ children }) => {
         navigate('/login');
     };
 
+    const isAdmin = user.is_admin;
+    const basePath = isAdmin ? "/admin/dashboard" : "/dashboard";
+
+    const userLinks = [
+        { to: "/dashboard", label: "Dashboard", icon: <FaThLarge />, end: true },
+        { to: "/dashboard/profile", label: "Profile", icon: <FaUser /> },
+        { to: "/dashboard/favorites", label: "Favorites", icon: <FaStar /> },
+        { to: "/dashboard/notifications", label: "Notifications", icon: <FaBell /> },
+    ];
+
+    const adminLinks = [
+        { to: "/admin/dashboard", label: "Analytics", icon: <FaChartBar />, end: true },
+        { to: "/admin/dashboard/schedules", label: "Schedules", icon: <FaCalendarAlt /> },
+        { to: "/admin/dashboard/studios", label: "Studios", icon: <FaBuilding /> },
+        { to: "/admin/dashboard/reservations", label: "Reservations", icon: <FaPlusSquare /> },
+        { to: "/admin/dashboard/users", label: "Users", icon: <FaUsers /> },
+    ];
+
+    const links = isAdmin ? adminLinks : userLinks;
+
     return (
         <div className="main-dashboard-layout">
             {/* Sidebar Navigation */}
             <aside className="sidebar">
                 <div className="sidebar-brand">
                     <div className="sidebar-brand-icon">✦</div>
-                    <span>TechStudio</span>
+                    <span>TechStudio {isAdmin && <small style={{ fontSize: '0.6rem', opacity: 0.7 }}>ADMIN</small>}</span>
                 </div>
                 
                 <nav>
                     <ul>
-                        <li>
-                            <NavLink to="/dashboard" end className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
-                                <FaThLarge /> Dashboard
-                            </NavLink>
-                        </li>
-                        <li>
-                            <NavLink to="/dashboard/profile" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
-                                <FaUser /> Profile
-                            </NavLink>
-                        </li>
-                        <li>
-                            <NavLink to="/dashboard/favorites" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
-                                <FaStar /> Favorites
-                            </NavLink>
-                        </li>
-                        <li>
-                            <NavLink to="/dashboard/notifications" className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}>
-                                <FaBell /> Notifications
-                            </NavLink>
-                        </li>
+                        {links.map((link) => (
+                            <li key={link.to}>
+                                <NavLink 
+                                    to={link.to} 
+                                    end={link.end} 
+                                    className={({ isActive }) => isActive ? 'sidebar-link active' : 'sidebar-link'}
+                                >
+                                    {link.icon} {link.label}
+                                </NavLink>
+                            </li>
+                        ))}
                     </ul>
                 </nav>
 

@@ -15,12 +15,17 @@ import StudioPage      from "./pages/StudioPage";
 import Login           from "./pages/Login";
 import Register        from "./pages/Register";
 import Dashboard       from "./pages/Dashboard";
-import ProtectedRoute from "./components/ProtectedRoute";
-import { getUser } from "./api/authApi";
-import ReservationDetailsPage from "./pages/ReservationDetailsPage"; // New import
+import ProtectedRoute  from "./components/ProtectedRoute";
+import AdminRoute      from "./components/AdminRoute";
+import AdminDashboard  from "./pages/AdminDashboard";
+import AdminStudioForm from "./pages/AdminStudioForm";
+import AdminUserHistory from "./pages/AdminUserHistory";
+import { getUser }     from "./api/authApi";
+import ReservationDetailsPage from "./pages/ReservationDetailsPage";
 
 // ── Auth Context ──────────────────────────────────────────────
 const AuthContext = createContext(null);
+export { AuthContext };
 export const useAuth = () => useContext(AuthContext);
 
 // ── Toast helper ──────────────────────────────────────────────
@@ -51,7 +56,7 @@ function AuthProvider({ children }) {
       if (token) {
         try {
           const userData = await getUser();
-          setUser(userData.user);
+          setUser(userData.user || userData.data || userData);
         } catch (err) {
           console.error("Failed to fetch user on mount:", err);
           localStorage.removeItem("authToken");
@@ -100,8 +105,9 @@ function AppContent() {
   const [toast,          setToast]          = useState(null);
   const navigate = useNavigate();
 
-  const { isAuthenticated, loading: authLoading } = useAuth(); // Use auth context here
+  const { isAuthenticated, loading: authLoading } = useAuth();
   const location = useLocation();
+  const isAdminPage = location.pathname.startsWith("/admin");
 
   const openBook = useCallback((studio = null) => {
     if (!isAuthenticated) {
@@ -119,34 +125,27 @@ function AppContent() {
   }, []);
 
   useEffect(() => {
-    // Support opening reservation intent from other pages (e.g., Dashboard → Home)
     if (location.state?.openReservation && !showReservation) {
       openBook(location.state.preselectedStudio ?? null);
-
-      // Clear the state so this doesn't re-trigger on back/forward
       navigate(location.pathname, { replace: true, state: null });
     }
   }, [location, showReservation, navigate, openBook]);
 
   return (
     <>
-      {/* ── Navigation ── */}
       <Navbar onBook={openBook} />
 
       <Routes>
         <Route path="/" element={
           <>
-            {/* ── Homepage Content (Calendar + Studio List) ── */}
             <section id="homepage-content" className="section" style={{ background: "var(--gray-50)" }}>
               <div>
-                {/* Two-col: Calendar + Studios */}
                 <div style={{
                   display: "grid",
-                  gridTemplateColumns: "320px 1fr", // Calendar fixed width on left
+                  gridTemplateColumns: "320px 1fr",
                   gap: "2.5rem",
                   alignItems: "start",
                 }}>
-                  {/* Calendar (sticky on desktop) */}
                   <div style={{ position: "sticky", top: "76px" }}>
                     <Calendar
                       selectedDate={selectedDate}
@@ -155,7 +154,6 @@ function AppContent() {
                     />
                   </div>
 
-                  {/* Studio grid */}
                   <StudioList
                     selectedDate={selectedDate}
                     availability={availability}
@@ -164,13 +162,12 @@ function AppContent() {
                 </div>
               </div>
 
-              {/* Responsive collapse to single col */}
               <style>{`
                 @media (max-width: 900px) {
-                  #homepage-content .container > div:last-child {
+                  #homepage-content > div {
                     grid-template-columns: 1fr !important;
                   }
-                  #homepage-content .container > div:last-child > div:first-child {
+                  #homepage-content > div > div:first-child {
                     position: static !important;
                   }
                 }
@@ -178,25 +175,28 @@ function AppContent() {
             </section>
           </>
         } />
-        {/* Route for Offers page, accessible via Navbar */}
         <Route path="/offers" element={<OffersPage />} />
-        {/* Route for About page, accessible via Navbar */}
         <Route path="/about" element={<AboutCompany />} />
         <Route path="/studio/:id" element={<StudioPage />} />
-        {/* Auth Routes */}
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
-        {/* Nested Dashboard Routes */}
+        
         <Route path="/dashboard/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
         <Route path="/dashboard/reservations/:bookingReference" element={<ProtectedRoute><ReservationDetailsPage /></ProtectedRoute>} />
-        {/* Route to trigger reservation modal */}
+        
+        {/* Admin Routes */}
+        <Route element={<AdminRoute />}>
+          <Route path="/admin/dashboard/*" element={<AdminDashboard />} />
+          <Route path="/admin/dashboard/studios/add" element={<AdminStudioForm />} />
+          <Route path="/admin/dashboard/studios/edit/:id" element={<AdminStudioForm />} />
+          <Route path="/admin/dashboard/users/:id/history" element={<AdminUserHistory />} />
+        </Route>
+
         <Route path="/reserve-studio" element={<ReservationTrigger openBook={openBook} navigate={navigate} />} />
       </Routes>
 
-      {/* ── Footer ── */}
       <Footer />
 
-      {/* ── Reservation Modal ── */}
       {showReservation && (
         <ReservationForm
           preselectedStudio={preStudio}
@@ -205,18 +205,15 @@ function AppContent() {
         />
       )}
 
-      {/* ── Toast ── */}
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
     </>
   );
 }
 
-// New component to handle the reservation trigger logic
 const ReservationTrigger = ({ openBook, navigate }) => {
   useEffect(() => {
     openBook();
     navigate('/', { replace: true, state: { openReservation: true } });
   }, [openBook, navigate]);
-
-  return null; // This component doesn't render anything visible
+  return null;
 };

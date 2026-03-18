@@ -12,7 +12,7 @@ const Login = () => {
     const [error, setError] = useState('');
     const [loading, setLoading] = useState(false);
     const navigate = useNavigate();
-    const { loginUser } = useAuth(); // Import loginUser from context
+    const { loginUser } = useAuth();
 
     const handleSubmit = async (e) => {
         e.preventDefault();
@@ -20,8 +20,15 @@ const Login = () => {
         setLoading(true);
         try {
             const data = await login(email, password);
-            loginUser(data.access_token, data.user); // Update auth context
-            navigate('/dashboard'); 
+            console.log('[Debug] Login successful, user object:', data.user);
+            
+            await loginUser(data.access_token, data.user);
+            
+            if (data.user.is_admin === true) {
+                navigate('/admin/dashboard');
+            } else {
+                navigate('/dashboard');
+            }
         } catch (err) {
             setError(err.message || 'Login failed');
         } finally {
@@ -31,19 +38,15 @@ const Login = () => {
 
     return (
         <section className="section" style={{ minHeight: 'calc(100vh - 72px)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: 'var(--gray-50)', padding: '2rem 1rem' }}>
-            <div style={{
+            <div className="card" style={{
                 display: 'flex',
                 flexDirection: 'row',
-                background: "var(--white)",
-                borderRadius: "var(--r-xl)",
                 width: "100%",
                 maxWidth: "900px",
                 minHeight: "500px",
-                boxShadow: "var(--shadow-lg)",
-                border: "1px solid var(--gray-200)",
-                overflow: 'hidden'
+                overflow: 'hidden',
+                border: "1px solid var(--gray-200)"
             }}>
-                {/* Left Brand Panel - hide on small screens */}
                 <div className="auth-brand-panel" style={{
                     flex: '1',
                     background: 'var(--grad-hero)',
@@ -65,8 +68,7 @@ const Login = () => {
                     </div>
                 </div>
 
-                {/* Right Form Panel */}
-                <div style={{ flex: '1', padding: '3rem 2.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <div style={{ flex: '1', padding: '3rem 2.5rem', display: 'flex', flexDirection: 'column', justifyContent: 'center', background: 'var(--white)' }}>
                     <div style={{ marginBottom: '2rem' }}>
                         <h2 style={{ fontSize: '1.75rem', fontWeight: 700, color: 'var(--gray-900)', marginBottom: '0.5rem' }}>Sign In</h2>
                         <p style={{ color: 'var(--gray-500)', fontSize: '0.95rem' }}>Enter your details below to continue.</p>
@@ -96,12 +98,12 @@ const Login = () => {
                         </div>
                         <div className="field">
                             <label className="field-label" htmlFor="password">Password</label>
-                            <div style={{ position: 'relative', display: 'flex', alignItems: 'center' }}>
+                            <div style={{ position: 'relative' }}>
                                 <input
                                     type={showPassword ? "text" : "password"}
                                     id="password"
                                     className="field-input"
-                                    style={{ width: '100%', paddingRight: '3.5rem' }}
+                                    style={{ paddingRight: '3.5rem' }}
                                     value={password}
                                     onChange={(e) => setPassword(e.target.value)}
                                     required
@@ -111,9 +113,9 @@ const Login = () => {
                                     type="button" 
                                     onClick={() => setShowPassword(!showPassword)}
                                     style={{
-                                        position: 'absolute', right: '0.75rem', background: 'none', border: 'none',
-                                        color: 'var(--gray-500)', fontSize: '0.75rem', fontWeight: '600', cursor: 'pointer',
-                                        padding: '0.2rem'
+                                        position: 'absolute', right: '1rem', top: '50%', transform: 'translateY(-50%)',
+                                        background: 'none', border: 'none', color: 'var(--gray-500)', fontSize: '0.75rem', 
+                                        fontWeight: '700', cursor: 'pointer', padding: '0.2rem'
                                     }}
                                 >
                                     {showPassword ? 'HIDE' : 'SHOW'}
@@ -124,7 +126,7 @@ const Login = () => {
                         <button
                             type="submit"
                             className="btn btn-primary btn-lg"
-                            style={{ width: '100%', marginTop: '1rem' }}
+                            style={{ width: '100%', marginTop: '0.5rem' }}
                             disabled={loading}
                         >
                             {loading ? 'Signing In...' : 'Sign In'}
