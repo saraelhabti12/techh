@@ -10,6 +10,7 @@ import PastReservations from '../components/Dashboard/PastReservations';
 import ProfileCard from '../components/Dashboard/ProfileCard';
 import FavoriteStudios from '../components/Dashboard/FavoriteStudios';
 import NotificationsPanel from '../components/Dashboard/NotificationsPanel';
+import { useTranslation } from 'react-i18next';
 import '../styles/globals.css';
 import '../styles/dashboard.css';
 
@@ -17,6 +18,7 @@ const Dashboard = () => {
     const { user, loading, logoutUser } = useAuth();
     const navigate = useNavigate();
     const location = useLocation();
+    const { t } = useTranslation();
     const [reservations, setReservations] = useState([]);
     const [error, setError] = useState('');
     const [loadingReservations, setLoadingReservations] = useState(true);
@@ -32,12 +34,12 @@ const Dashboard = () => {
             setReservations(response.data);
             setError('');
         } catch (err) {
-            setError(err.message || 'Failed to fetch reservations.');
+            setError(err.message || t('failed_fetch_reservations'));
             setReservations([]);
         } finally {
             setLoadingReservations(false);
         }
-    }, [user]);
+    }, [user, t]);
 
     useEffect(() => {
         if (!loading && !user) {
@@ -48,13 +50,13 @@ const Dashboard = () => {
     }, [user, loading, navigate, fetchReservations]);
 
     const handleCancelReservation = async (bookingReference) => {
-        if (window.confirm('Are you sure you want to cancel this reservation?')) {
+        if (window.confirm(t('cancel_reservation'))) {
             try {
                 await cancelReservationApi(bookingReference);
                 await fetchReservations(); // Re-fetch to update status
-                alert('Reservation cancelled successfully!');
+                alert(t('cancel_success'));
             } catch (err) {
-                setError(err.message || 'Failed to cancel reservation.');
+                setError(err.message || t('failed_cancel_reservation'));
             }
         }
     };
@@ -62,7 +64,7 @@ const Dashboard = () => {
     if (loading || loadingReservations) {
         return (
             <div>
-                <p>Loading dashboard...</p>
+                <p>{t('loading_dashboard')}</p>
             </div>
         );
     }

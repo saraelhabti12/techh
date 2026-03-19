@@ -1,6 +1,8 @@
 import { useState, useEffect } from "react";
 import { Link, NavLink, useNavigate } from "react-router-dom";
 import { useAuth } from "../App"; // Import useAuth context
+import { useTranslation } from "react-i18next";
+import LanguageSwitcher from "./LanguageSwitcher";
 
 /**
  * Navbar
@@ -12,6 +14,7 @@ export default function Navbar({ onBook }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { isAuthenticated, logoutUser, user } = useAuth(); // Use auth context
+  const { t } = useTranslation();
 
   useEffect(() => {
     const handle = () => setScrolled(window.scrollY > 16);
@@ -22,7 +25,7 @@ export default function Navbar({ onBook }) {
   const publicLinks = [
     { to: "/",        label: "Home" },
     { to: "/offers",  label: "Offers" },
-    { to: "/about",   label: "About" },
+    { to: "/about",   label: t("about") },
   ];
 
   const dashboardPath = user?.is_admin ? "/admin/dashboard" : "/dashboard";
@@ -95,6 +98,7 @@ export default function Navbar({ onBook }) {
                 </NavLink>
               </>
             )}
+            <LanguageSwitcher />
           </nav>
 
           {/* CTA + Burger */}
@@ -104,35 +108,37 @@ export default function Navbar({ onBook }) {
               onClick={onBook}
               style={{ fontWeight: 600, padding: "0.55rem 1.4rem" }}
             >
-              Reserve Now
+              {t("book_now")}
             </button>
 
             {/* Mobile burger */}
-            <button
-              className="nav-mobile"
-              onClick={() => setMenuOpen(o => !o)}
-              style={{
-                background: "var(--white)", border: "1px solid var(--gray-200)",
-                borderRadius: "var(--r-sm)", padding: "0.5rem",
-                display: "flex", flexDirection: "column",
-                gap: "5px", cursor: "pointer",
-                boxShadow: "var(--shadow-xs)"
-              }}
-              aria-label="Toggle menu"
-            >
-              {[0, 1, 2].map(i => (
-                <span key={i} style={{
-                  display: "block", width: 20, height: "2px",
-                  background: menuOpen ? "var(--gray-900)" : "var(--gray-700)",
-                  borderRadius: 2, transition: "all 0.3s var(--ease)",
-                  transform: menuOpen
-                    ? i === 0 ? "rotate(45deg) translate(5px, 5px)"
-                    : i === 2 ? "rotate(-45deg) translate(5px, -5px)"
-                    : "scaleX(0)"
-                    : "none",
-                }} />
-              ))}
-            </button>
+            <div className="nav-mobile" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              <LanguageSwitcher />
+              <button
+                onClick={() => setMenuOpen(o => !o)}
+                style={{
+                  background: "var(--white)", border: "1px solid var(--gray-200)",
+                  borderRadius: "var(--r-sm)", padding: "0.5rem",
+                  display: "flex", flexDirection: "column",
+                  gap: "5px", cursor: "pointer",
+                  boxShadow: "var(--shadow-xs)"
+                }}
+                aria-label="Toggle menu"
+              >
+                {[0, 1, 2].map(i => (
+                  <span key={i} style={{
+                    display: "block", width: 20, height: "2px",
+                    background: menuOpen ? "var(--gray-900)" : "var(--gray-700)",
+                    borderRadius: 2, transition: "all 0.3s var(--ease)",
+                    transform: menuOpen
+                      ? i === 0 ? "rotate(45deg) translate(5px, 5px)"
+                      : i === 2 ? "rotate(-45deg) translate(5px, -5px)"
+                      : "scaleX(0)"
+                      : "none",
+                  }} />
+                ))}
+              </button>
+            </div>
           </div>
         </div>
 
@@ -196,7 +202,7 @@ export default function Navbar({ onBook }) {
               style={{ marginTop: "1rem", width: "100%", padding: "0.85rem" }}
               onClick={() => { setMenuOpen(false); onBook(); }}
             >
-              Reserve Now
+              {t("book_now")}
             </button>
           </div>
         </div>

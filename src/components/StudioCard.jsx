@@ -1,3 +1,5 @@
+import { useTranslation } from "react-i18next";
+
 /**
  * StudioCard
  * ─ Individual studio card with CSS-based hover effects and modern layout.
@@ -10,6 +12,7 @@
  *   delay        number  animation stagger delay (ms)
  */
 export default function StudioCard({ studio, status, price, onBook, onDetail, delay = 0 }) {
+  const { t } = useTranslation();
   const isAvailable = !status || status === "available";
   // displayPrice: uses the price from availability if provided, otherwise defaults to studio's price_per_hour
   const displayPrice = price || studio.price_per_hour;
@@ -38,7 +41,7 @@ export default function StudioCard({ studio, status, price, onBook, onDetail, de
         {/* Availability badge */}
         <div className={`status-badge ${isAvailable ? 'available' : 'reserved'}`}>
           <span className="dot" />
-          {isAvailable ? "Available" : "Reserved"}
+          {isAvailable ? t("available") : t("reserved")}
         </div>
 
         {/* ── Hover Overlay Actions ── */}
@@ -53,14 +56,14 @@ export default function StudioCard({ studio, status, price, onBook, onDetail, de
               style={{ padding: '0.75rem 1.5rem', minWidth: '130px' }}
               onClick={e => { e.stopPropagation(); onBook?.(studio); }}
             >
-              Book Now
+              {t("book_now")}
             </button>
             <button
               className="btn btn-outline"
               style={{ padding: '0.75rem 1.5rem', minWidth: '130px', background: 'rgba(255,255,255,1)', color: 'var(--gray-900)', borderColor: 'var(--white)' }}
               onClick={e => { e.stopPropagation(); onDetail?.(studio); }}
             >
-              View Details
+              {t("view_details")}
             </button>
           </div>
         )}

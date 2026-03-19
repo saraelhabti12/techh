@@ -1,7 +1,9 @@
 import React from 'react';
 import { FaCalendarAlt, FaCalendarCheck, FaCalendarTimes, FaCalendarMinus } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 
 const StatsCards = ({ reservations }) => {
+    const { t } = useTranslation();
     if (!reservations) return null;
 
     const now = new Date();
@@ -22,10 +24,10 @@ const StatsCards = ({ reservations }) => {
     const cancelled = reservations.filter(res => res.status === 'cancelled').length;
 
     const stats = [
-        { label: 'Total Bookings', value: total, icon: <FaCalendarAlt />, color: 'total' },
-        { label: 'Upcoming', value: upcoming, icon: <FaCalendarMinus />, color: 'upcoming' },
-        { label: 'Completed', value: completed, icon: <FaCalendarCheck />, color: 'completed' },
-        { label: 'Cancelled', value: cancelled, icon: <FaCalendarTimes />, color: 'cancelled' },
+        { label: t('total_bookings'), value: total, icon: <FaCalendarAlt />, color: 'total' },
+        { label: t('upcoming_reservations'), value: upcoming, icon: <FaCalendarMinus />, color: 'upcoming' },
+        { label: t('completed'), value: completed, icon: <FaCalendarCheck />, color: 'completed' },
+        { label: t('cancelled'), value: cancelled, icon: <FaCalendarTimes />, color: 'cancelled' },
     ];
 
     return (

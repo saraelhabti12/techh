@@ -1,8 +1,11 @@
 import React from 'react';
 import { FaCalendarAlt, FaClock, FaTag, FaChevronRight, FaTimesCircle } from 'react-icons/fa';
 import { Link } from 'react-router-dom';
+import { useTranslation } from 'react-i18next';
 
 const ReservationCard = ({ reservation, onCancel, type }) => {
+    const { t } = useTranslation();
+
     return (
         <div className="reservation-card animate-fadeUp">
             <div className="res-img-wrapper">
@@ -17,7 +20,7 @@ const ReservationCard = ({ reservation, onCancel, type }) => {
                 <div className="res-header">
                     <h4 className="res-title">{reservation.studio}</h4>
                     <span className={`res-status-badge ${reservation.status}`}>
-                        {reservation.status}
+                        {t(reservation.status)}
                     </span>
                 </div>
                 
@@ -39,7 +42,7 @@ const ReservationCard = ({ reservation, onCancel, type }) => {
                     to={`/dashboard/reservations/${reservation.booking_reference}`}
                     className="btn btn-soft btn-sm"
                 >
-                    Details <FaChevronRight />
+                    {t('details')} <FaChevronRight />
                 </Link>
                 
                 {type === 'upcoming' && reservation.status === 'pending' && (
@@ -48,7 +51,7 @@ const ReservationCard = ({ reservation, onCancel, type }) => {
                         className="btn btn-ghost btn-sm"
                         style={{ color: 'var(--reserved)' }}
                     >
-                        <FaTimesCircle /> Cancel
+                        <FaTimesCircle /> {t('cancel')}
                     </button>
                 )}
             </div>

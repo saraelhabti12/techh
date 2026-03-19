@@ -2,13 +2,9 @@ import { useState, useCallback, useEffect, useMemo } from "react";
 import { createReservation, getStudios, getStudioAvailability } from "../api/studioApi";
 import Modal from "./Modal";
 import Calendar from "./Calendar";
-import { FaCheck, FaArrowRight, FaArrowLeft, FaCalendarAlt, FaClock, FaUser, FaEnvelope, FaPhone, FaBuilding, FaVideo, FaUsers, FaTrash } from 'react-icons/fa';
-
-const TIME_SLOTS_PERIODS = [
-  { id: "morning",   label: "Morning",   time: "08:00 - 12:00", icon: <FaCalendarAlt /> },
-  { id: "afternoon", label: "Afternoon", time: "12:00 - 18:00",  icon: <FaCalendarAlt /> },
-  { id: "evening",   label: "Evening",   time: "18:00 - 23:59",  icon: <FaCalendarAlt /> },
-];
+import BookingReceiptModal from "./BookingReceiptModal";
+import { useTranslation } from "react-i18next";
+import { FaCheck, FaArrowRight, FaArrowLeft, FaCalendarAlt, FaClock, FaUser, FaEnvelope, FaPhone, FaBuilding, FaVideo, FaUsers, FaTrash, FaEdit } from 'react-icons/fa';
 
 const SUB_SLOTS = {
   morning: ["08:00 - 09:00", "09:00 - 10:00", "10:00 - 11:00", "11:00 - 12:00"],
@@ -16,22 +12,14 @@ const SUB_SLOTS = {
   evening: ["19:00 - 20:00", "20:00 - 21:00", "21:00 - 22:00", "22:00 - 23:00", "23:00 - 23:59"],
 };
 
-const SERVICES = [
-  { id: "studio", label: "Studio Only", icon: <FaBuilding /> },
-  { id: "equipment", label: "Studio + Equipment", icon: <FaVideo /> },
-  { id: "team", label: "Studio + Equipment + Team", icon: <FaUsers /> },
-];
-
 const EQUIPMENT_LIST = ["Cameras", "Lighting", "Microphone", "Lens", "Stabilisateurs","Drone"];
 const TEAM_LIST = ["Photographer", "Videographer", "Lighting Technician", "Sound Engineer", "Editor"];
 
 function pad(n) { return String(n).padStart(2, "0"); }
 
-const STEP_LABELS = ["Service", "Studios", "Schedule", "Info", "Finish"];
-
 // ── Sub-components ─────────────────────────────────────────────
 
-function StepPill({ step, current }) {
+function StepPill({ step, current, label }) {
   const done = current > step;
   const active = current === step;
   return (
@@ -55,17 +43,23 @@ function StepPill({ step, current }) {
         color: active ? "var(--pink-500)" : done ? "var(--gray-900)" : "var(--gray-400)",
         fontWeight: 700,
       }}>
-        {STEP_LABELS[step - 1]}
+        {label}
       </span>
     </div>
   );
 }
 
-function Step1({ data, onChange }) {
+function Step1({ data, onChange, t }) {
+  const SERVICES = [
+    { id: "studio", label: t("studio_only"), icon: <FaBuilding /> },
+    { id: "equipment", label: t("studio_equipment"), icon: <FaVideo /> },
+    { id: "team", label: t("studio_equipment_team"), icon: <FaUsers /> },
+  ];
+
   return (
     <div className="animate-fadeUp">
-      <h2 className="heading-md" style={{ marginBottom: "0.5rem" }}>Service Selection</h2>
-      <p className="body-sm" style={{ marginBottom: "2.5rem" }}>Choose how you'd like to use our creative spaces.</p>
+      <h2 className="heading-md" style={{ marginBottom: "0.5rem" }}>{t("service_selection")}</h2>
+      <p className="body-sm" style={{ marginBottom: "2.5rem" }}>{t("choose_service")}</p>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: "1.25rem", marginBottom: "2.5rem" }}>
         {SERVICES.map(s => {
@@ -89,7 +83,7 @@ function Step1({ data, onChange }) {
 
       {(data.serviceType === "equipment" || data.serviceType === "team") && (
         <div className="animate-fadeIn" style={{ marginBottom: "2rem" }}>
-          <h4 className="eyebrow" style={{ marginBottom: '1rem' }}>Additional Equipment</h4>
+          <h4 className="eyebrow" style={{ marginBottom: '1rem' }}>{t("additional_equipment")}</h4>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
             {EQUIPMENT_LIST.map(eq => {
               const isSel = (data.equipment || []).includes(eq);
@@ -117,7 +111,7 @@ function Step1({ data, onChange }) {
 
       {data.serviceType === "team" && (
         <div className="animate-fadeIn" style={{ marginBottom: "2rem" }}>
-          <h4 className="eyebrow" style={{ marginBottom: '1rem' }}>Select Team Members</h4>
+          <h4 className="eyebrow" style={{ marginBottom: '1rem' }}>{t("select_team_members")}</h4>
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
             {TEAM_LIST.map(member => {
               const isSel = (data.team || []).includes(member);
@@ -146,7 +140,7 @@ function Step1({ data, onChange }) {
   );
 }
 
-function Step2({ data, onChange, studios }) {
+function Step2({ data, onChange, studios, t }) {
   const toggleStudio = (s) => {
     const current = data.studios || [];
     const exists = current.find(item => item.id === s.id);
@@ -156,8 +150,8 @@ function Step2({ data, onChange, studios }) {
 
   return (
     <div className="animate-fadeUp">
-      <h2 className="heading-md" style={{ marginBottom: "0.5rem" }}>Select Studios</h2>
-      <p className="body-sm" style={{ marginBottom: "1.5rem" }}>Select one or more professional spaces for your project.</p>
+      <h2 className="heading-md" style={{ marginBottom: "0.5rem" }}>{t("select_studios")}</h2>
+      <p className="body-sm" style={{ marginBottom: "1.5rem" }}>{t("select_studios_desc")}</p>
 
       <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: "1.5rem" }}>
         {studios.map(s => {
@@ -187,11 +181,18 @@ function Step2({ data, onChange, studios }) {
   );
 }
 
-function Step3({ data, onChange }) {
+function Step3({ data, onChange, t }) {
+  const TIME_SLOTS_PERIODS = [
+    { id: "morning",   label: t("morning"),   time: "08:00 - 12:00", icon: <FaCalendarAlt /> },
+    { id: "afternoon", label: t("afternoon"), time: "12:00 - 18:00",  icon: <FaCalendarAlt /> },
+    { id: "evening",   label: t("evening"),   time: "18:00 - 23:59",  icon: <FaCalendarAlt /> },
+  ];
+
   const [selectedDate, setSelectedDate] = useState(data.slots.length > 0 ? data.slots[0].date : (new Date().toISOString().split('T')[0]));
   const [period, setPeriod] = useState("morning");
   const [bookedSlots, setBookedSlots] = useState([]);
   const [loading, setLoading] = useState(false);
+  const [editingSlotKey, setEditingSlotKey] = useState(null);
 
   useEffect(() => {
     if (selectedDate && data.studios.length > 0) {
@@ -241,17 +242,19 @@ function Step3({ data, onChange }) {
     }
   });
 
+  const ALL_TIMES = Object.values(SUB_SLOTS).flat();
+
   return (
     <div className="animate-fadeUp">
-      <h2 className="heading-md" style={{ marginBottom: "0.5rem" }}>Schedule & Time Slots</h2>
-      <p className="body-sm" style={{ marginBottom: "2rem" }}>Select a date and choose your time slots.</p>
+      <h2 className="heading-md" style={{ marginBottom: "0.5rem" }}>{t("schedule_time_slots")}</h2>
+      <p className="body-sm" style={{ marginBottom: "2rem" }}>{t("schedule_desc")}</p>
 
       <div style={{ display: 'grid', gridTemplateColumns: '320px 1fr', gap: '2rem', marginBottom: '2.5rem' }}>
         <div>
           <Calendar selectedDate={selectedDate} onSelectDate={setSelectedDate} />
         </div>
         <div>
-          <h3 className="eyebrow" style={{ marginBottom: '1rem' }}>1. Select Period</h3>
+          <h3 className="eyebrow" style={{ marginBottom: '1rem' }}>{t("select_period")}</h3>
           <div style={{ display: 'flex', gap: '0.75rem', marginBottom: '1.5rem' }}>
             {TIME_SLOTS_PERIODS.map(p => (
               <button 
@@ -267,7 +270,7 @@ function Step3({ data, onChange }) {
             ))}
           </div>
 
-          <h3 className="eyebrow" style={{ marginBottom: '1rem' }}>2. Available Slots</h3>
+          <h3 className="eyebrow" style={{ marginBottom: '1rem' }}>{t("available_slots")}</h3>
           {loading ? (
              <div style={{ textAlign: 'center', padding: '2rem' }}><span className="spinner" /></div>
           ) : (
@@ -287,7 +290,7 @@ function Step3({ data, onChange }) {
                   >
                     <span style={{ fontWeight: 700 }}>{start}</span>
                     <span style={{ fontSize: '0.6rem', opacity: 0.7 }}>to {end}</span>
-                    {isBooked && <span style={{ fontSize: '0.6rem', opacity: 0.8 }}>Reserved</span>}
+                    {isBooked && <span style={{ fontSize: '0.6rem', opacity: 0.8 }}>{t("reserved")}</span>}
                   </button>
                 );
               })}
@@ -296,64 +299,100 @@ function Step3({ data, onChange }) {
         </div>
       </div>
 
-      <h3 className="eyebrow" style={{ marginBottom: '1rem' }}>Selected Slots</h3>
+      <h3 className="eyebrow" style={{ marginBottom: '1rem' }}>{t("selected_slots")}</h3>
       {displaySlots.length > 0 ? (
         <div style={{ border: '1px solid var(--gray-200)', borderRadius: '16px', overflow: 'hidden' }}>
           <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left' }}>
             <thead style={{ background: 'var(--gray-50)', borderBottom: '1px solid var(--gray-200)' }}>
               <tr>
-                <th style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--gray-500)', fontWeight: 600 }}>Date</th>
-                <th style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--gray-500)', fontWeight: 600 }}>Time</th>
-                <th style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--gray-500)', fontWeight: 600, textAlign: 'right' }}>Action</th>
+                <th style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--gray-500)', fontWeight: 600 }}>{t("date")}</th>
+                <th style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--gray-500)', fontWeight: 600 }}>{t("time")}</th>
+                <th style={{ padding: '1rem', fontSize: '0.85rem', color: 'var(--gray-500)', fontWeight: 600, textAlign: 'right' }}>{t("actions")}</th>
               </tr>
             </thead>
             <tbody>
-              {displaySlots.map((s) => (
-                <tr key={`${s.date}-${s.start_time}`} style={{ borderBottom: '1px solid var(--gray-100)' }}>
-                  <td style={{ padding: '1rem', fontWeight: 500 }}>{s.date}</td>
-                  <td style={{ padding: '1rem' }}>{s.start_time} - {s.end_time}</td>
-                  <td style={{ padding: '1rem', textAlign: 'right' }}>
-                    <button className="btn btn-ghost btn-sm" style={{ color: 'var(--reserved)' }} onClick={() => removeSlot(s.date, s.start_time)}>
-                      <FaTrash />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+              {displaySlots.map((s) => {
+                const key = `${s.date}_${s.start_time}`;
+                const isEditing = editingSlotKey === key;
+                return (
+                  <tr key={key} style={{ borderBottom: '1px solid var(--gray-100)' }}>
+                    <td style={{ padding: '1rem', fontWeight: 500 }}>{s.date}</td>
+                    <td style={{ padding: '1rem' }}>
+                      {isEditing ? (
+                        <select 
+                          className="field-input"
+                          style={{ padding: '0.4rem', height: 'auto', minHeight: '36px' }}
+                          value={`${s.start_time} - ${s.end_time}`}
+                          onChange={(e) => {
+                            const [newStart, newEnd] = e.target.value.split(' - ');
+                            const newSlots = data.slots.map(slot => {
+                              if (slot.date === s.date && slot.start_time === s.start_time) {
+                                return { ...slot, start_time: newStart, end_time: newEnd };
+                              }
+                              return slot;
+                            });
+                            onChange("slots", newSlots);
+                            setEditingSlotKey(null);
+                          }}
+                        >
+                          {ALL_TIMES.map(t => <option key={t} value={t}>{t}</option>)}
+                        </select>
+                      ) : (
+                        `${s.start_time} - ${s.end_time}`
+                      )}
+                    </td>
+                    <td style={{ padding: '1rem', textAlign: 'right' }}>
+                      {isEditing ? (
+                        <button className="btn btn-ghost btn-sm" onClick={() => setEditingSlotKey(null)}>
+                          {t("cancel")}
+                        </button>
+                      ) : (
+                        <button className="btn btn-ghost btn-sm" style={{ color: 'var(--gray-500)', marginRight: '0.5rem' }} onClick={() => setEditingSlotKey(key)}>
+                          <FaEdit />
+                        </button>
+                      )}
+                      <button className="btn btn-ghost btn-sm" style={{ color: 'var(--reserved)' }} onClick={() => removeSlot(s.date, s.start_time)}>
+                        <FaTrash />
+                      </button>
+                    </td>
+                  </tr>
+                );
+              })}
             </tbody>
           </table>
         </div>
       ) : (
         <div style={{ padding: '2rem', textAlign: 'center', background: 'var(--gray-50)', borderRadius: '16px', border: '1px dashed var(--gray-300)', color: 'var(--gray-400)' }}>
-          No slots selected. Please pick a date and time above.
+          {t("no_slots_selected")}
         </div>
       )}
     </div>
   );
 }
 
-function Step4({ data, onChange, totalPrice, totalHours }) {
+function Step4({ data, onChange, totalPrice, totalHours, t }) {
   return (
     <div className="animate-fadeUp">
-      <h2 className="heading-md" style={{ marginBottom: "0.5rem" }}>Confirm Identity</h2>
-      <p className="body-sm" style={{ marginBottom: "2.5rem" }}>Please provide your details to finalize the booking.</p>
+      <h2 className="heading-md" style={{ marginBottom: "0.5rem" }}>{t("confirm_identity")}</h2>
+      <p className="body-sm" style={{ marginBottom: "2.5rem" }}>{t("confirm_desc")}</p>
 
       <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
         <div className="field">
-          <label className="field-label">Full Name</label>
+          <label className="field-label">{t("full_name")}</label>
           <div style={{ position: 'relative' }}>
             <FaUser style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
             <input className="field-input" style={{ paddingLeft: '2.8rem' }} value={data.name} onChange={e => onChange("name", e.target.value)} placeholder="John Doe" />
           </div>
         </div>
         <div className="field">
-          <label className="field-label">Email Address</label>
+          <label className="field-label">{t("email_address")}</label>
           <div style={{ position: 'relative' }}>
             <FaEnvelope style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
             <input className="field-input" style={{ paddingLeft: '2.8rem' }} value={data.email} onChange={e => onChange("email", e.target.value)} placeholder="john@example.com" />
           </div>
         </div>
         <div className="field">
-          <label className="field-label">Phone Number</label>
+          <label className="field-label">{t("phone_number")}</label>
           <div style={{ position: 'relative' }}>
             <FaPhone style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
             <input className="field-input" style={{ paddingLeft: '2.8rem' }} value={data.phone} onChange={e => onChange("phone", e.target.value)} placeholder="+212 ..." />
@@ -362,15 +401,15 @@ function Step4({ data, onChange, totalPrice, totalHours }) {
 
         <div style={{ marginTop: '1rem', padding: '1.5rem', background: 'var(--gray-50)', borderRadius: '16px', border: '1px solid var(--gray-200)' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <span style={{ fontSize: '0.9rem', color: 'var(--gray-500)' }}>Total Studios</span>
+                <span style={{ fontSize: '0.9rem', color: 'var(--gray-500)' }}>{t("total_studios")}</span>
                 <span style={{ fontWeight: 700 }}>{data.studios.length}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                <span style={{ fontSize: '0.9rem', color: 'var(--gray-500)' }}>Total Hours</span>
+                <span style={{ fontSize: '0.9rem', color: 'var(--gray-500)' }}>{t("total_hours")}</span>
                 <span style={{ fontWeight: 700 }}>{totalHours}</span>
             </div>
             <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '1rem', borderTop: '1.5px dashed var(--gray-300)' }}>
-                <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>Total Price</span>
+                <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>{t("total_price")}</span>
                 <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--pink-500)' }}>MAD {totalPrice}</span>
             </div>
         </div>
@@ -380,6 +419,7 @@ function Step4({ data, onChange, totalPrice, totalHours }) {
 }
 
 export default function ReservationForm({ preselectedStudio, preselectedDate, onClose }) {
+  const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const [data, setData] = useState({
     serviceType: "studio", equipment: [], team: [], 
@@ -389,20 +429,20 @@ export default function ReservationForm({ preselectedStudio, preselectedDate, on
   const [studios, setStudios] = useState([]);
   const [loading, setLoading] = useState(false);
   const [resId, setResId] = useState(null);
+  const [bookingData, setBookingData] = useState(null);
 
   useEffect(() => {
     getStudios().then(res => {
         const fetched = res?.data || res || [];
         setStudios(fetched);
         
-        // If preselectedStudio was just an ID, map it to the full object
-        setData(p => {
-            if (p.studios.length === 1 && (typeof p.studios[0] === 'number' || typeof p.studios[0] === 'string')) {
-                const found = fetched.find(s => String(s.id) === String(p.studios[0]));
-                if (found) return { ...p, studios: [found] };
-            }
-            return p;
-        });
+        if (p => p.studios.length === 1 && (typeof p.studios[0] === 'number' || typeof p.studios[0] === 'string')) {
+          setData(p => {
+              const found = fetched.find(s => String(s.id) === String(p.studios[0]));
+              if (found) return { ...p, studios: [found] };
+              return p;
+          });
+        }
     });
   }, []);
 
@@ -438,6 +478,7 @@ export default function ReservationForm({ preselectedStudio, preselectedDate, on
           name: data.name,
           email: data.email,
           phone: data.phone,
+          total_price: totalPrice,
           studio_ids: data.studios.map(s => Number(s?.id || s)),
           slots: data.slots.map(s => ({
             studio_id: Number(s.studio_id),
@@ -450,6 +491,7 @@ export default function ReservationForm({ preselectedStudio, preselectedDate, on
         console.log("Reservation Payload:", payload);
 
         const res = await createReservation(payload);
+        setBookingData(res.data || res);
         setResId(res.data?.booking_reference || res.booking_reference || res.data?.id);
         setStep(5);
       } catch (err) {
@@ -471,37 +513,32 @@ export default function ReservationForm({ preselectedStudio, preselectedDate, on
     }
   };
 
+  const STEP_LABELS = [t("service"), t("studios"), t("schedule"), t("info"), t("finish")];
+
   return (
-    <Modal isOpen={true} onClose={onClose} title={step === 5 ? "Booking Confirmed" : "Studio Reservation"} maxWidth="900px">
+    <Modal isOpen={true} onClose={onClose} title={step === 5 ? t("booking_confirmed") : t("reservation")} maxWidth="900px">
       <div style={{ display: 'flex', gap: '1rem', marginBottom: '2.5rem', padding: '0 1rem' }}>
-        {[1, 2, 3, 4].map(s => <StepPill key={s} step={s} current={step} />)}
+        {[1, 2, 3, 4].map(s => <StepPill key={s} step={s} current={step} label={STEP_LABELS[s-1]} />)}
       </div>
 
       <div style={{ minHeight: '400px' }}>
-        {step === 1 && <Step1 data={data} onChange={update} />}
-        {step === 2 && <Step2 data={data} onChange={update} studios={studios} />}
-        {step === 3 && <Step3 data={data} onChange={update} />}
-        {step === 4 && <Step4 data={data} onChange={update} totalPrice={totalPrice} totalHours={totalHours} />}
+        {step === 1 && <Step1 data={data} onChange={update} t={t} />}
+        {step === 2 && <Step2 data={data} onChange={update} studios={studios} t={t} />}
+        {step === 3 && <Step3 data={data} onChange={update} t={t} />}
+        {step === 4 && <Step4 data={data} onChange={update} totalPrice={totalPrice} totalHours={totalHours} t={t} />}
         
-        {step === 5 && (
-          <div className="animate-fadeUp" style={{ textAlign: 'center', padding: '2rem 0' }}>
-            <div style={{ width: 80, height: 80, borderRadius: '50%', background: 'var(--grad-cta)', color: '#fff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '2.5rem', margin: '0 auto 2rem' }}>
-              <FaCheck />
-            </div>
-            <h2 className="heading-lg">Thank You!</h2>
-            <p className="body-md">Your reservation <strong>#{resId}</strong> has been successfully placed.</p>
-            <button className="btn btn-primary btn-lg" style={{ marginTop: '2.5rem' }} onClick={onClose}>Finish & Close</button>
-          </div>
+        {step === 5 && bookingData && (
+          <BookingReceiptModal bookingData={bookingData} onClose={onClose} />
         )}
       </div>
 
       {step < 5 && (
         <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '3rem', paddingTop: '2rem', borderTop: '1px solid var(--gray-100)' }}>
           <button className="btn btn-outline" onClick={() => step === 1 ? onClose() : setStep(step - 1)}>
-            <FaArrowLeft /> {step === 1 ? 'Cancel' : 'Back'}
+            <FaArrowLeft /> {step === 1 ? t("cancel") : t("back")}
           </button>
           <button className="btn btn-primary btn-lg" onClick={handleNext} disabled={loading}>
-            {loading ? 'Processing...' : step === 4 ? 'Confirm Reservation' : 'Continue'} <FaArrowRight />
+            {loading ? t("processing") : step === 4 ? t("confirm_reservation") : t("continue")} <FaArrowRight />
           </button>
         </div>
       )}

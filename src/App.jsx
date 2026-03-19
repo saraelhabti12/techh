@@ -1,5 +1,6 @@
 import { useState, useCallback, createContext, useContext, useEffect } from "react";
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { useTranslation } from "react-i18next";
 import "./styles/globals.css";
 
 import Navbar          from "./components/Navbar";
@@ -104,6 +105,7 @@ function AppContent() {
   const [preStudio,      setPreStudio]      = useState(null);
   const [toast,          setToast]          = useState(null);
   const navigate = useNavigate();
+  const { t } = useTranslation();
 
   const { isAuthenticated, loading: authLoading } = useAuth();
   const location = useLocation();
@@ -112,12 +114,12 @@ function AppContent() {
   const openBook = useCallback((studio = null) => {
     if (!isAuthenticated) {
       navigate("/login");
-      setToast("Please log in to make a reservation.");
+      setToast(t('please_login'));
       return;
     }
     setPreStudio(studio);
     setShowReservation(true);
-  }, [isAuthenticated, navigate]);
+  }, [isAuthenticated, navigate, t]);
 
   const closeBook = useCallback(() => {
     setShowReservation(false);

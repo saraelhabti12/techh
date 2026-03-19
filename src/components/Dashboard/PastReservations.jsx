@@ -2,18 +2,21 @@ import React from 'react';
 import ReservationCard from './ReservationCard';
 import EmptyState from './EmptyState';
 import { FaHistory } from 'react-icons/fa';
+import { useTranslation } from 'react-i18next';
 
 const PastReservations = ({ reservations }) => {
+    const { t } = useTranslation();
+
     return (
         <section>
             <div className="section-title">
-                <h3>Past Reservations</h3>
+                <h3>{t('past_reservations')}</h3>
             </div>
-            
+
             {reservations.length === 0 ? (
                 <EmptyState
-                    message="No history yet"
-                    description="Your previous bookings will appear here once completed."
+                    message={t('no_history_title')}
+                    description={t('no_history_desc')}
                     icon={FaHistory}
                 />
             ) : (

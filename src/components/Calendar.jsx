@@ -1,4 +1,5 @@
 import { useState, useEffect, useCallback } from "react";
+import { useTranslation } from "react-i18next";
 
 /**
  * Calendar
@@ -9,16 +10,14 @@ import { useState, useEffect, useCallback } from "react";
  *   onAvailabilityLoad (data) → void
  */
 
-const MONTHS = [
-  "January","February","March","April","May","June",
-  "July","August","September","October","November","December",
-];
-const WDAYS = ["Sun","Mon","Tue","Wed","Thu","Fri","Sat"];
-
 function pad(n) { return String(n).padStart(2, "0"); }
 function fmt(y, m, d) { return `${y}-${pad(m + 1)}-${pad(d)}`; }
 
 export default function Calendar({ selectedDate, onSelectDate, onAvailabilityLoad }) {
+  const { t } = useTranslation();
+  const MONTHS = t('months', { returnObjects: true });
+  const WDAYS = t('wdays', { returnObjects: true });
+
   const today  = new Date();
   const [viewY, setViewY] = useState(today.getFullYear());
   const [viewM, setViewM] = useState(today.getMonth());
@@ -128,7 +127,7 @@ export default function Calendar({ selectedDate, onSelectDate, onAvailabilityLoa
             {loading && (
               <div style={{ fontSize: "0.7rem", color: "var(--purple-400)", display: "flex", alignItems: "center", justifyContent: "center", gap: "0.4rem" }}>
                 <span className="spinner spinner-purple" style={{ width: 12, height: 12, borderWidth: "1.5px" }} />
-                updating...
+                {t('updating')}
               </div>
             )}
           </div>
@@ -198,11 +197,11 @@ export default function Calendar({ selectedDate, onSelectDate, onAvailabilityLoa
       }}>
         <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
           <span className="dot dot-available" />
-          <span style={{ fontSize: "0.75rem", color: "var(--gray-700)", fontWeight: 500 }}>Available</span>
+          <span style={{ fontSize: "0.75rem", color: "var(--gray-700)", fontWeight: 500 }}>{t('available')}</span>
         </div>
         <div style={{ display: "flex", alignItems: "center", gap: "0.4rem" }}>
           <span className="dot dot-reserved" />
-          <span style={{ fontSize: "0.75rem", color: "var(--gray-700)", fontWeight: 500 }}>Reserved</span>
+          <span style={{ fontSize: "0.75rem", color: "var(--gray-700)", fontWeight: 500 }}>{t('reserved')}</span>
         </div>
       </div>
     </div>

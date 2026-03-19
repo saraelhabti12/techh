@@ -2,6 +2,7 @@ import { useState, useEffect } from "react";
 import StudioCard from "./StudioCard";
 import Modal from "./Modal";
 import { getStudios } from "../api/studioApi";
+import { useTranslation } from "react-i18next";
 
 /**
  * StudioList
@@ -17,6 +18,7 @@ export default function StudioList({ selectedDate, availability, onBook }) {
   const [detail,  setDetail]    = useState(null);
   const [imgIdx,  setImgIdx]    = useState(0);
   const [loading, setLoading]   = useState(true);
+  const { t, i18n } = useTranslation();
 
   useEffect(() => {
     setLoading(true);
@@ -42,7 +44,7 @@ export default function StudioList({ selectedDate, availability, onBook }) {
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
             <span style={{ fontSize: "1.2rem" }}>📅</span>
             <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.1rem", color: "var(--gray-900)" }}>
-              Availability for <strong>{new Date(selectedDate + "T00:00:00").toLocaleDateString("en-US", { weekday: "long", month: "long", day: "numeric" })}</strong>
+              {t('availability_for')} <strong>{new Date(selectedDate + "T00:00:00").toLocaleDateString(i18n.language === 'fr' ? 'fr-FR' : 'en-US', { weekday: "long", month: "long", day: "numeric" })}</strong>
             </span>
           </div>
           <div style={{ display: "flex", gap: "1.25rem", fontSize: "0.85rem", fontWeight: 500 }}>
@@ -50,11 +52,11 @@ export default function StudioList({ selectedDate, availability, onBook }) {
               <>
                 <span style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "var(--available)" }}>
                   <span className="dot dot-available" />
-                  {availableCount} Available
+                  {availableCount} {t('available')}
                 </span>
                 <span style={{ display: "flex", alignItems: "center", gap: "0.4rem", color: "var(--reserved)" }}>
                   <span className="dot dot-reserved" />
-                  {reservedCount} Reserved
+                  {reservedCount} {t('reserved')}
                 </span>
               </>
             )}
@@ -147,23 +149,23 @@ export default function StudioList({ selectedDate, availability, onBook }) {
                 <span style={{ fontSize: "1rem", color: "var(--gray-500)", marginLeft: "0.4rem" }}>/ hour</span>
                 <span style={{ fontSize: "0.9rem", color: "var(--gray-200)", margin: "0 1.5rem" }}>|</span>
                 <span style={{ fontSize: "1rem", color: "var(--gray-600)", fontWeight: 500 }}>
-                  Min {detail.min_hours}h session
+                  {t('min_session', { hours: detail.min_hours })}
                 </span>
               </div>
               <span className="tag" style={{ background: 'var(--available-bg)', color: 'var(--available)', fontSize: "0.9rem", padding: "0.6rem 1.2rem", borderRadius: "12px", fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                <span className="dot" style={{ background: "var(--available)", width: 8, height: 8 }} /> Available Now
+                <span className="dot" style={{ background: "var(--available)", width: 8, height: 8 }} /> {t('available_now')}
               </span>
             </div>
 
             <div style={{ marginBottom: "2.5rem" }}>
-              <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray-400)', marginBottom: '1rem', fontWeight: 800 }}>About this space</h4>
+              <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray-400)', marginBottom: '1rem', fontWeight: 800 }}>{t('about_this_space')}</h4>
               <p style={{ fontSize: "1.1rem", lineHeight: "1.8", color: "var(--gray-700)", fontWeight: 400 }}>
                 {detail.description}
               </p>
             </div>
 
             <div style={{ marginBottom: "3rem" }}>
-              <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray-400)', marginBottom: '1.25rem', fontWeight: 800 }}>Included Amenities</h4>
+              <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray-400)', marginBottom: '1.25rem', fontWeight: 800 }}>{t('included_amenities')}</h4>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
                  {(detail.features || []).map(f => (
                   <span key={f} style={{ padding: "0.6rem 1.25rem", fontSize: "0.9rem", background: "var(--gray-50)", color: "var(--gray-700)", border: "1px solid var(--gray-100)", borderRadius: "12px", fontWeight: 600 }}>
@@ -175,13 +177,13 @@ export default function StudioList({ selectedDate, availability, onBook }) {
 
             {/* Actions */}
             <div style={{ display: "flex", gap: "1.25rem", paddingTop: '1.5rem', borderTop: '1px solid var(--gray-100)' }}>
-              <button className="btn btn-outline" style={{ flex: 1, height: "56px", borderRadius: "14px" }} onClick={() => setDetail(null)}>Close</button>
+              <button className="btn btn-outline" style={{ flex: 1, height: "56px", borderRadius: "14px" }} onClick={() => setDetail(null)}>{t('close')}</button>
               <button
                 className="btn btn-primary"
                 style={{ flex: 2, height: "56px", borderRadius: "14px", fontSize: "1.1rem" }}
                 onClick={() => { setDetail(null); onBook?.(detail); }}
               >
-                Book This Studio Now →
+                {t('book_this_studio_now')} →
               </button>
             </div>
           </div>
