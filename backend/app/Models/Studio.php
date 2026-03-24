@@ -13,6 +13,8 @@ class Studio extends Model
 
     protected $casts = [
         'features' => 'array',
+        'features_en' => 'array',
+        'features_fr' => 'array',
         'gallery' => 'array',
     ];
 

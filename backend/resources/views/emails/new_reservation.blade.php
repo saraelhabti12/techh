@@ -1,73 +1,142 @@
 <!DOCTYPE html>
 <html>
 <head>
+    <meta charset="utf-8">
     <title>New Reservation - TechStudio</title>
     <style>
-        body { font-family: 'Helvetica Neue', Helvetica, Arial, sans-serif; color: #333; line-height: 1.6; background-color: #f9fafb; padding: 20px; }
-        .container { max-width: 600px; margin: 0 auto; background: #ffffff; padding: 30px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); }
-        .header { text-align: center; border-bottom: 2px solid #f3f4f6; padding-bottom: 20px; margin-bottom: 20px; }
-        .header h2 { color: #ec4899; margin: 0; font-size: 24px; }
-        h3 { color: #111827; font-size: 16px; margin-top: 25px; margin-bottom: 10px; text-transform: uppercase; letter-spacing: 0.05em; border-bottom: 1px solid #f3f4f6; padding-bottom: 5px; }
-        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 12px 0; text-align: left; }
-        th { color: #6b7280; font-weight: 600; width: 40%; font-size: 14px; }
-        td { color: #111827; font-weight: 500; font-size: 14px; }
-        .slot { background: #fdf2f8; padding: 15px; border-radius: 8px; margin-bottom: 10px; border: 1px solid #fce7f3; }
-        .slot strong { color: #db2777; display: inline-block; width: 60px; }
-        .total-box { margin-top: 30px; padding-top: 15px; border-top: 2px dashed #e5e7eb; display: flex; justify-content: space-between; align-items: center; }
-        .total-label { font-size: 18px; font-weight: 700; color: #374151; }
-        .total-amount { font-size: 24px; font-weight: 800; color: #ec4899; }
-        .footer { margin-top: 30px; text-align: center; font-size: 12px; color: #9ca3af; }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f4f7f6;
+            margin: 0;
+            padding: 0;
+            color: #333;
+        }
+        .email-container {
+            max-width: 600px;
+            margin: 20px auto;
+            background-color: #ffffff;
+            border-radius: 8px;
+            overflow: hidden;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.1);
+        }
+        .header {
+            background-color: #1a202c;
+            color: #ffffff;
+            padding: 30px;
+            text-align: center;
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 24px;
+            letter-spacing: 1px;
+        }
+        .content {
+            padding: 30px;
+        }
+        .content h2 {
+            font-size: 20px;
+            color: #2d3748;
+            border-bottom: 2px solid #edf2f7;
+            padding-bottom: 10px;
+            margin-bottom: 20px;
+        }
+        .detail-row {
+            display: flex;
+            margin-bottom: 15px;
+            line-height: 1.5;
+        }
+        .detail-label {
+            width: 150px;
+            font-weight: bold;
+            color: #718096;
+        }
+        .detail-value {
+            flex: 1;
+            color: #2d3748;
+        }
+        .price-box {
+            margin-top: 30px;
+            padding: 20px;
+            background-color: #f7fafc;
+            border-radius: 6px;
+            text-align: right;
+        }
+        .price-label {
+            font-size: 16px;
+            color: #718096;
+        }
+        .price-value {
+            font-size: 24px;
+            font-weight: bold;
+            color: #38a169;
+            display: block;
+        }
+        .footer {
+            background-color: #edf2f7;
+            padding: 20px;
+            text-align: center;
+            font-size: 12px;
+            color: #a0aec0;
+        }
     </style>
 </head>
 <body>
-    <div class="container">
+    <div class="email-container">
         <div class="header">
-            <h2>New Booking Received</h2>
-            <p style="margin: 5px 0 0; color: #6b7280;">A customer has placed a new reservation.</p>
+            <h1>TechStudio</h1>
         </div>
-        
-        @php
-            $firstReservation = is_array($reservations) || $reservations instanceof \Illuminate\Support\Collection ? (isset($reservations[0]) ? $reservations[0] : $reservations->first()) : $reservations;
-            $allReservations = is_array($reservations) || $reservations instanceof \Illuminate\Support\Collection ? $reservations : [$reservations];
-        @endphp
+        <div class="content">
+            <h2>New Reservation Details</h2>
+            
+            <div class="detail-row">
+                <div class="detail-label">Booking Reference:</div>
+                <div class="detail-value"><strong>{{ $reservations->first()->booking_reference }}</strong></div>
+            </div>
 
-        <h3>Customer Details</h3>
-        <table>
-            <tr>
-                <th>Full Name</th>
-                <td>{{ $firstReservation->customer_name ?? $firstReservation->user->name ?? 'N/A' }}</td>
-            </tr>
-            <tr>
-                <th>Email Address</th>
-                <td>{{ $firstReservation->customer_email ?? $firstReservation->user->email ?? 'N/A' }}</td>
-            </tr>
-            <tr>
-                <th>Phone Number</th>
-                <td>{{ $firstReservation->customer_phone ?? 'N/A' }}</td>
-            </tr>
-            <tr>
-                <th>Booking Reference</th>
-                <td>{{ $firstReservation->booking_reference ?? 'N/A' }}</td>
-            </tr>
-        </table>
+            <div class="detail-row">
+                <div class="detail-label">Customer Name:</div>
+                <div class="detail-value">{{ $reservations->first()->customer_name }}</div>
+            </div>
+            
+            <div class="detail-row">
+                <div class="detail-label">Customer Email:</div>
+                <div class="detail-value">{{ $reservations->first()->customer_email }}</div>
+            </div>
+            
+            <div class="detail-row">
+                <div class="detail-label">Customer Phone:</div>
+                <div class="detail-value">{{ $reservations->first()->customer_phone ?? 'N/A' }}</div>
+            </div>
 
-        <h3>Reservation Details</h3>
-        @foreach($allReservations as $res)
-        <div class="slot">
-            <div style="margin-bottom: 5px;"><strong>Studio:</strong> {{ $res->studio->name ?? 'Unknown Studio' }}</div>
-            <div style="margin-bottom: 5px;"><strong>Date:</strong> {{ $res->date }}</div>
-            <div><strong>Time:</strong> {{ $res->time_slot ?? 'N/A' }}</div>
+            <h3 style="margin-top: 30px; color: #2d3748; border-bottom: 1px solid #edf2f7; padding-bottom: 5px;">Reserved Slots</h3>
+            
+            @foreach($reservations as $reservation)
+                <div style="margin-bottom: 20px; padding: 15px; border: 1px solid #edf2f7; border-radius: 5px;">
+                    <div class="detail-row">
+                        <div class="detail-label">Studio:</div>
+                        <div class="detail-value">{{ $reservation->studio->name }}</div>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <div class="detail-label">Date:</div>
+                        <div class="detail-value">{{ \Carbon\Carbon::parse($reservation->date)->format('F d, Y') }}</div>
+                    </div>
+                    
+                    <div class="detail-row">
+                        <div class="detail-label">Time:</div>
+                        <div class="detail-value">{{ $reservation->time_slot }}</div>
+                    </div>
+                </div>
+            @endforeach
+
+            <div class="price-box">
+                <span class="price-label">Total Amount Paid</span>
+                <span class="price-value">{{ number_format($reservations->sum('total_price'), 2) }} MAD</span>
+            </div>
         </div>
-        @endforeach
-
-        <div class="total-box">
-            <span class="total-label">Total Price</span>
-            <span class="total-amount">{{ $firstReservation->total_price ?? 0 }} MAD</span>
-        </div>
-        
         <div class="footer">
-            &copy; {{ date('Y') }} TechStudio. All rights reserved.
+            &copy; {{ date('Y') }} TechStudio. All rights reserved.<br>
+            This is an automated notification.
         </div>
     </div>
 </body>

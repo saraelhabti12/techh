@@ -11,6 +11,7 @@ import ReservationForm from "./components/ReservationForm";
 import AboutCompany    from "./components/AboutCompany";
 import OffersPage      from "./pages/OffersPage";
 import StudioPage      from "./pages/StudioPage";
+import AuthModal       from "./components/AuthModal";
 
 // Auth related imports
 import Login           from "./pages/Login";
@@ -34,7 +35,7 @@ function Toast({ message, onDone }) {
   useState(() => { const t = setTimeout(onDone, 3200); return () => clearTimeout(t); });
   return (
     <div style={{
-      position: "fixed", bottom: "1.75rem", right: "1.75rem", zIndex: 900,
+      position: "fixed", bottom: "1.75rem", right: "1.75rem", zIndex: 1100,
       background: "#fff", borderLeft: "4px solid var(--available)",
       borderRadius: "var(--r-md)", padding: "0.9rem 1.3rem",
       fontSize: "0.83rem", boxShadow: "var(--shadow-md)",
@@ -77,7 +78,7 @@ function AuthProvider({ children }) {
   const logoutUser = useCallback(() => {
     localStorage.removeItem("authToken");
     setUser(null);
-    navigate("/login");
+    navigate("/");
   }, [navigate]);
 
   const authState = { user, setUser, loading, loginUser, logoutUser, isAuthenticated: !!user };
@@ -104,6 +105,11 @@ function AppContent() {
   const [showReservation, setShowReservation] = useState(false);
   const [preStudio,      setPreStudio]      = useState(null);
   const [toast,          setToast]          = useState(null);
+  
+  // Auth Modal State
+  const [showAuthModal, setShowAuthModal] = useState(false);
+  const [authMode, setAuthMode] = useState('login');
+
   const navigate = useNavigate();
   const { t } = useTranslation();
 
@@ -113,18 +119,23 @@ function AppContent() {
 
   const openBook = useCallback((studio = null) => {
     if (!isAuthenticated) {
-      navigate("/login");
-      setToast(t('please_login'));
+      setAuthMode('login');
+      setShowAuthModal(true);
       return;
     }
     setPreStudio(studio);
     setShowReservation(true);
-  }, [isAuthenticated, navigate, t]);
+  }, [isAuthenticated]);
 
   const closeBook = useCallback(() => {
     setShowReservation(false);
     setPreStudio(null);
   }, []);
+
+  const handleAuth = (mode = 'login') => {
+    setAuthMode(mode);
+    setShowAuthModal(true);
+  };
 
   useEffect(() => {
     if (location.state?.openReservation && !showReservation) {
@@ -135,7 +146,7 @@ function AppContent() {
 
   return (
     <>
-      <Navbar onBook={openBook} />
+      <Navbar onBook={openBook} onAuth={handleAuth} />
 
       <Routes>
         <Route path="/" element={
@@ -204,6 +215,14 @@ function AppContent() {
           preselectedStudio={preStudio}
           preselectedDate={selectedDate}
           onClose={closeBook}
+        />
+      )}
+
+      {showAuthModal && (
+        <AuthModal 
+          isOpen={showAuthModal} 
+          onClose={() => setShowAuthModal(false)} 
+          initialMode={authMode}
         />
       )}
 

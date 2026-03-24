@@ -15,6 +15,8 @@ class AdminStudioController extends Controller
         if ($request->has('search')) {
             $search = $request->query('search');
             $query->where('name', 'like', "%{$search}%")
+                  ->orWhere('name_en', 'like', "%{$search}%")
+                  ->orWhere('name_fr', 'like', "%{$search}%")
                   ->orWhere('description', 'like', "%{$search}%");
         }
 
@@ -25,12 +27,22 @@ class AdminStudioController extends Controller
     {
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'name_en' => 'nullable|string|max:255',
+            'name_fr' => 'nullable|string|max:255',
             'tagline' => 'nullable|string|max:255',
+            'tagline_en' => 'nullable|string|max:255',
+            'tagline_fr' => 'nullable|string|max:255',
             'description' => 'required|string',
+            'description_en' => 'nullable|string',
+            'description_fr' => 'nullable|string',
             'price_per_hour' => 'required|numeric',
-            'image' => 'required|string', // Assuming URL or base64 for now
+            'image' => 'required|string',
             'features' => 'nullable|array',
+            'features_en' => 'nullable|array',
+            'features_fr' => 'nullable|array',
             'badge' => 'nullable|string',
+            'badge_en' => 'nullable|string',
+            'badge_fr' => 'nullable|string',
             'rating' => 'nullable|numeric|min:0|max:5',
         ]);
 
@@ -48,12 +60,22 @@ class AdminStudioController extends Controller
     {
         $validated = $request->validate([
             'name' => 'sometimes|string|max:255',
+            'name_en' => 'nullable|string|max:255',
+            'name_fr' => 'nullable|string|max:255',
             'tagline' => 'nullable|string|max:255',
+            'tagline_en' => 'nullable|string|max:255',
+            'tagline_fr' => 'nullable|string|max:255',
             'description' => 'sometimes|string',
+            'description_en' => 'nullable|string',
+            'description_fr' => 'nullable|string',
             'price_per_hour' => 'sometimes|numeric',
             'image' => 'sometimes|string',
             'features' => 'nullable|array',
+            'features_en' => 'nullable|array',
+            'features_fr' => 'nullable|array',
             'badge' => 'nullable|string',
+            'badge_en' => 'nullable|string',
+            'badge_fr' => 'nullable|string',
             'rating' => 'nullable|numeric|min:0|max:5',
         ]);
 

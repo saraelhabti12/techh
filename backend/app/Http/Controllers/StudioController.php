@@ -9,14 +9,38 @@ use Illuminate\Http\Request;
 
 class StudioController extends Controller
 {
-    public function index()
+    private function getLocale(Request $request)
     {
-        return response()->json(['data' => Studio::all()]);
+        $lang = $request->header('Accept-Language', 'en');
+        return str_contains($lang, 'fr') ? 'fr' : 'en';
     }
 
-    public function show($id)
+    private function localizeStudio($studio, $locale)
+    {
+        // Fallback to English if French is empty
+        $suffix = ($locale === 'fr' && !empty($studio->name_fr)) ? '_fr' : '_en';
+        
+        $studio->name = $studio->{"name{$suffix}"} ?: $studio->name;
+        $studio->tagline = $studio->{"tagline{$suffix}"} ?: $studio->tagline;
+        $studio->description = $studio->{"description{$suffix}"} ?: $studio->description;
+        $studio->badge = $studio->{"badge{$suffix}"} ?: $studio->badge;
+        $studio->features = $studio->{"features{$suffix}"} ?: $studio->features;
+
+        return $studio;
+    }
+
+    public function index(Request $request)
+    {
+        $locale = $this->getLocale($request);
+        $studios = Studio::all()->map(fn($s) => $this->localizeStudio($s, $locale));
+        return response()->json(['data' => $studios]);
+    }
+
+    public function show(Request $request, $id)
     {
         $studio = Studio::findOrFail($id);
+        $locale = $this->getLocale($request);
+        $studio = $this->localizeStudio($studio, $locale);
         return response()->json(['data' => $studio]);
     }
 

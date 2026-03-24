@@ -67,9 +67,12 @@ const Register = () => {
                     borderRight: '1px solid var(--gray-200)'
                 }}>
                     <div style={{ marginBottom: 'auto' }}>
-                        <Link to="/" className="nav-logo-text" style={{ fontSize: '1.8rem' }}>
-                            <span className="nav-logo-icon" style={{ width: '36px', height: '36px', fontSize: '1rem' }}>✦</span>
-                            Tech<em style={{ fontStyle: "italic", color: "var(--pink-500)", paddingRight: "0.2rem" }}>Studio</em>
+                        <Link to="/" className="nav-logo-text" style={{ fontSize: '1.8rem', textDecoration: 'none' }}>
+                            <img 
+                                src="https://chatgpt.com/backend-api/estuary/content?id=file_0000000004807246b759bff43c95eaf4&ts=492758&p=fs&cid=1&sig=bad48e32482ca41ad3b70fc7d5e7921499a305dab5b54b19ea5333074e69d060&v=0" 
+                                alt="TechStudio Logo" 
+                                style={{ height: '55px', width: 'auto', objectFit: 'contain' }} 
+                            />
                         </Link>
                     </div>
                     <div>

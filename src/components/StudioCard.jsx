@@ -44,7 +44,8 @@ export default function StudioCard({ studio, status, price, onBook, onDetail, de
           {isAvailable ? t("available") : t("reserved")}
         </div>
 
-        {/* ── Hover Overlay Actions ── */}
+        {/* ── Hover Overlay Actions ── */
+        }
         {!isAvailable ? (
            <div className="studio-card-actions" style={{ background: 'rgba(0,0,0,0.6)', cursor: 'not-allowed' }}>
               <span style={{ color: 'white', fontWeight: 600, fontSize: '0.9rem' }}>Fully Booked</span>

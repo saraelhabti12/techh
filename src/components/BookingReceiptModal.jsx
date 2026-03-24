@@ -32,21 +32,22 @@ export default function BookingReceiptModal({ bookingData, onClose }) {
     }
   };
 
-  const reference = bookingData?.booking_reference || 'N/A';
+  const reference = bookingData?.booking_reference || bookingData?.id || 'N/A';
   const reservations = bookingData?.reservations || [];
-  
+
   const firstRes = reservations[0] || {};
-  const userName = firstRes.customer_name || 'N/A';
-  const userEmail = firstRes.customer_email || 'N/A';
-  const status = firstRes.status || 'pending';
-  
-  const totalPrice = firstRes.total_price || 0;
+  const userName = firstRes.customer_name || bookingData?.customer_name || 'N/A';
+  const userEmail = firstRes.customer_email || bookingData?.customer_email || 'N/A';
+  const status = firstRes.status || bookingData?.status || 'pending';
+
+  const totalPrice = firstRes.total_price || bookingData?.total_price || 0;
 
   let totalHours = 0;
   const studiosBooked = [];
   reservations.forEach(res => {
-     res.slots?.forEach(slot => {
-         const studioName = slot.studio?.name || 'Studio';
+     const slots = res.slots || [];
+     slots.forEach(slot => {
+         const studioName = slot.studio?.name || res.studio?.name || 'Studio';
          studiosBooked.push({
              studioName,
              date: slot.date,

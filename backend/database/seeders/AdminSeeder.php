@@ -11,7 +11,7 @@ class AdminSeeder extends Seeder
     public function run()
     {
         User::updateOrCreate(
-            ['email' => 'admin@techstudio.com'],
+            ['email' => 'techweb.ma@gmail.com'],
             [
                 'name' => 'Admin TechStudio',
                 'password' => Hash::make('Admin123!'),
@@ -20,5 +20,3 @@ class AdminSeeder extends Seeder
         );
     }
 }
-
-

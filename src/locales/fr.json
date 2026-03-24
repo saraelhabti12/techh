@@ -130,5 +130,27 @@
   "about_this_space": "À propos de cet espace",
   "included_amenities": "Équipements inclus",
   "close": "Fermer",
-  "book_this_studio_now": "Réserver ce studio maintenant"
+  "book_this_studio_now": "Réserver ce studio maintenant",
+  "equipment_list": {
+    "Cameras": "Caméras",
+    "Lighting": "Éclairage",
+    "Microphone": "Microphone",
+    "Lens": "Objectifs",
+    "Stabilizers": "Stabilisateurs",
+    "Drone": "Drone"
+  },
+  "team_list": {
+    "Photographer": "Photographe",
+    "Videographer": "Vidéaste",
+    "Lighting Technician": "Éclairagiste",
+    "Sound Engineer": "Ingénieur du son",
+    "Editor": "Monteur"
+  },
+  "errors": {
+    "slot_already_added": "Ce créneau est déjà ajouté.",
+    "fill_contact_details": "Veuillez remplir toutes les coordonnées.",
+    "select_studio": "Veuillez sélectionner au moins un studio.",
+    "select_slot": "Veuillez sélectionner au moins un créneau horaire.",
+    "booking_failed": "La réservation a échoué."
+  }
 }

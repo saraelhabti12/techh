@@ -130,5 +130,27 @@
   "about_this_space": "About this space",
   "included_amenities": "Included Amenities",
   "close": "Close",
-  "book_this_studio_now": "Book This Studio Now"
+  "book_this_studio_now": "Book This Studio Now",
+  "equipment_list": {
+    "Cameras": "Cameras",
+    "Lighting": "Lighting",
+    "Microphone": "Microphone",
+    "Lens": "Lens",
+    "Stabilizers": "Stabilizers",
+    "Drone": "Drone"
+  },
+  "team_list": {
+    "Photographer": "Photographer",
+    "Videographer": "Videographer",
+    "Lighting Technician": "Lighting Technician",
+    "Sound Engineer": "Sound Engineer",
+    "Editor": "Editor"
+  },
+  "errors": {
+    "slot_already_added": "This slot is already added.",
+    "fill_contact_details": "Please fill in all contact details.",
+    "select_studio": "Please select at least one studio.",
+    "select_slot": "Please select at least one time slot.",
+    "booking_failed": "Booking failed."
+  }
 }

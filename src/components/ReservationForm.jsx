@@ -87,6 +87,7 @@ function Step1({ data, onChange, t }) {
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
             {EQUIPMENT_LIST.map(eq => {
               const isSel = (data.equipment || []).includes(eq);
+              const labelKey = eq === "Stabilisateurs" ? "Stabilizers" : eq;
               return (
                 <div key={eq} onClick={() => {
                   const current = data.equipment || [];
@@ -101,7 +102,7 @@ function Step1({ data, onChange, t }) {
                     transition: "all 0.2s",
                   }}
                 >
-                  {eq}
+                  {t(`equipment_list.${labelKey}`)}
                 </div>
               );
             })}
@@ -115,6 +116,7 @@ function Step1({ data, onChange, t }) {
           <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
             {TEAM_LIST.map(member => {
               const isSel = (data.team || []).includes(member);
+              const labelKey = member.replace(/ /g, '');
               return (
                 <div key={member} onClick={() => {
                   const current = data.team || [];
@@ -129,7 +131,7 @@ function Step1({ data, onChange, t }) {
                     transition: "all 0.2s",
                   }}
                 >
-                  {member}
+                  {t(`team_list.${member}`)}
                 </div>
               );
             })}
@@ -139,6 +141,7 @@ function Step1({ data, onChange, t }) {
     </div>
   );
 }
+
 
 function Step2({ data, onChange, studios, t }) {
   const toggleStudio = (s) => {
@@ -210,7 +213,7 @@ function Step3({ data, onChange, t }) {
     const [start, end] = timeRange.split(' - ');
     
     if (data.slots.some(s => s.date === selectedDate && s.start_time === start)) {
-      alert("This slot is already added.");
+      alert(t("errors.slot_already_added"));
       return;
     }
 

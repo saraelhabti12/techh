@@ -1,7 +1,4 @@
-    /**
- * TechStudio Admin API Service
- * ─────────────────────────────────────────────────────────────────────
- */
+import i18n from '../i18n';
 
 let BASE = process.env.REACT_APP_API_URL || "/api";
 if (!BASE.endsWith("/api") && !BASE.endsWith("/api/")) {
@@ -12,6 +9,7 @@ async function req(path, opts = {}) {
   const headers = {
     "Content-Type": "application/json",
     Accept:         "application/json",
+    "Accept-Language": i18n.language || 'en',
     ...(opts.headers || {}),
   };
 

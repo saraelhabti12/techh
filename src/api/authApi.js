@@ -1,4 +1,6 @@
 // src/api/authApi.js
+import i18n from '../i18n';
+
 // Ensure the API base URL points to the Laravel API namespace (e.g. http://localhost:8000/api)
 let API_BASE_URL = process.env.REACT_APP_API_URL || "/api";
 if (!API_BASE_URL.endsWith("/api") && !API_BASE_URL.endsWith("/api/")) {
@@ -20,6 +22,7 @@ async function request(path, options = {}) {
   const headers = {
     "Content-Type": "application/json",
     Accept: "application/json",
+    "Accept-Language": i18n.language || 'en',
     ...options.headers,
   };
 

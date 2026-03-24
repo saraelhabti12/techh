@@ -30,10 +30,12 @@ import {
 function ReservationDetailModal({ reservationId, onClose }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
     getAdminReservationDetail(reservationId)
       .then(res => setData(res.data))
+      .catch(err => setError(err.message || "Failed to load reservation details"))
       .finally(() => setLoading(false));
   }, [reservationId]);
 
@@ -48,6 +50,12 @@ function ReservationDetailModal({ reservationId, onClose }) {
           <div style={{ padding: "4rem", textAlign: "center" }}>
             <span className="spinner spinner-purple" />
             <p style={{ marginTop: "1rem", color: "var(--gray-500)" }}>Loading details...</p>
+          </div>
+        ) : error ? (
+          <div style={{ padding: "4rem", textAlign: "center" }}>
+            <FaInfoCircle size={48} color="var(--pink-500)" style={{ marginBottom: '1.5rem', opacity: 0.5 }} />
+            <p style={{ color: "var(--gray-500)" }}>{error}</p>
+            <button className="btn btn-primary btn-md" style={{ marginTop: '1.5rem' }} onClick={onClose}>Close</button>
           </div>
         ) : (
           <div className="animate-fadeIn">
@@ -81,9 +89,9 @@ function ReservationDetailModal({ reservationId, onClose }) {
                     <FaUser size={12} /> Customer Information
                   </h4>
                   <div style={{ padding: '1.5rem', background: '#fff', borderRadius: '16px', border: '1px solid var(--gray-100)', boxShadow: 'var(--shadow-xs)' }}>
-                    <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{data.user.name}</div>
-                    <div style={{ fontSize: '0.9rem', color: 'var(--gray-500)', marginTop: '0.5rem' }}><FaEnvelope size={12} /> {data.user.email}</div>
-                    <div style={{ fontSize: '0.9rem', color: 'var(--gray-500)', marginTop: '0.25rem' }}><FaPhone size={12} /> {data.user.phone || 'No phone'}</div>
+                    <div style={{ fontWeight: 700, fontSize: '1.1rem' }}>{data.user?.name || data.customer_name}</div>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--gray-500)', marginTop: '0.5rem' }}><FaEnvelope size={12} /> {data.user?.email || data.customer_email}</div>
+                    <div style={{ fontSize: '0.9rem', color: 'var(--gray-500)', marginTop: '0.25rem' }}><FaPhone size={12} /> {data.user?.phone || data.customer_phone || 'No phone'}</div>
                   </div>
                 </div>
 
@@ -103,13 +111,13 @@ function ReservationDetailModal({ reservationId, onClose }) {
                   <FaClock size={12} /> Booked Slots
                 </h4>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem', maxHeight: '300px', overflowY: 'auto' }}>
-                  {data.slots.map((slot, i) => (
+                  {(data.slots || []).map((slot, i) => (
                     <div key={i} style={{ padding: '1rem', background: '#fff', border: '1px solid var(--gray-100)', borderRadius: '12px', boxShadow: 'var(--shadow-xs)' }}>
                       <div style={{ display: 'flex', justifyContent: 'space-between', fontWeight: 700, fontSize: '0.9rem' }}>
                         <span>{slot.date}</span>
                         <span style={{ fontSize: '0.7rem', color: 'var(--pink-500)' }}>{slot.session}</span>
                       </div>
-                      <div style={{ color: 'var(--gray-500)', fontSize: '0.85rem', marginTop: '0.25rem' }}>{slot.time}</div>
+                      <div style={{ color: 'var(--gray-500)', fontSize: '0.85rem', marginTop: '0.25rem' }}>{slot.start_time} - {slot.end_time}</div>
                     </div>
                   ))}
                 </div>
@@ -143,9 +151,16 @@ function ReservationDetailModal({ reservationId, onClose }) {
 function AnalyticsView() {
   const [stats, setStats] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState(null);
 
   useEffect(() => {
-    getAdminStats().then(res => setStats(res.data)).finally(() => setLoading(false));
+    getAdminStats()
+      .then(res => setStats(res.data))
+      .catch(err => {
+        console.error("Failed to fetch admin stats:", err);
+        setError(err.message || "Failed to load analytics");
+      })
+      .finally(() => setLoading(false));
   }, []);
 
   if (loading) return (
@@ -154,6 +169,16 @@ function AnalyticsView() {
       <p style={{ marginTop: '1rem', color: 'var(--gray-500)' }}>Compiling metrics...</p>
     </div>
   );
+
+  if (error) return (
+    <div style={{ padding: '4rem', textAlign: 'center' }}>
+      <FaShieldAlt size={48} color="var(--pink-500)" style={{ marginBottom: '1.5rem', opacity: 0.5 }} />
+      <h3 className="heading-md" style={{ color: 'var(--gray-900)' }}>{error}</h3>
+      <p style={{ marginTop: '1rem', color: 'var(--gray-500)' }}>Please ensure you have administrative permissions.</p>
+    </div>
+  );
+
+  if (!stats) return null;
 
   return (
     <div className="animate-fadeUp">

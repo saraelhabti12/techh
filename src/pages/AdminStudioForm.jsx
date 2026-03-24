@@ -20,7 +20,10 @@ const AdminStudioForm = () => {
                 const studios = res.data?.data || res.data || res;
                 const studio = studios.find(s => s.id === parseInt(id));
                 if (studio) {
-                    setFormData(studio);
+                    setFormData({
+                        ...studio,
+                        features: studio.features || []
+                    });
                 }
                 setLoading(false);
             }).catch(() => {
@@ -132,7 +135,7 @@ const AdminStudioForm = () => {
                             <button type="button" className="btn btn-primary btn-md" onClick={addFeature}>Add</button>
                         </div>
                         <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem", marginTop: "1rem" }}>
-                            {formData.features.map((f, i) => (
+                            {(formData.features || []).map((f, i) => (
                                 <span key={i} className="tag tag-pink" style={{ padding: '0.5rem 1rem', borderRadius: '12px', fontSize: '0.85rem' }}>
                                     {f} 
                                     <FaTrash 

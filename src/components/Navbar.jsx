@@ -1,5 +1,5 @@
 import { useState, useEffect } from "react";
-import { Link, NavLink, useNavigate } from "react-router-dom";
+import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../App"; // Import useAuth context
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "./LanguageSwitcher";
@@ -9,8 +9,9 @@ import LanguageSwitcher from "./LanguageSwitcher";
  * ─ Sticky, blur-on-scroll header with professional layout.
  * Props:
  *   onBook  () → void   open the reservation wizard
+ *   onAuth  (mode) → void  open the auth modal
  */
-export default function Navbar({ onBook }) {
+export default function Navbar({ onBook, onAuth }) {
   const [scrolled, setScrolled] = useState(false);
   const [menuOpen, setMenuOpen] = useState(false);
   const { isAuthenticated, logoutUser, user } = useAuth(); // Use auth context
@@ -46,9 +47,15 @@ export default function Navbar({ onBook }) {
           }}
         >
           {/* Brand */}
-          <Link to="/" className="nav-logo-text">
-            <span className="nav-logo-icon">✦</span>
-            Tech<em style={{ fontStyle: "italic", color: "var(--pink-500)", paddingRight: "0.2rem" }}>Studio</em>
+          <Link to="/" className="nav-logo-text" style={{ textDecoration: 'none', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <img 
+              src="https://chatgpt.com/backend-api/estuary/content?id=file_0000000004807246b759bff43c95eaf4&ts=492758&p=fs&cid=1&sig=bad48e32482ca41ad3b70fc7d5e7921499a305dab5b54b19ea5333074e69d060&v=0" 
+              alt="" 
+              style={{ height: '40px', width: 'auto', objectFit: 'contain' }} 
+            />
+            <span style={{ fontSize: '1.5rem', fontWeight: '700', letterSpacing: '-0.5px', color: 'var(--gray-900)' }}>
+              Tech<span style={{ color: 'var(--pink-500)', fontStyle: 'italic' }}>Studio</span>
+            </span>
           </Link>
 
           {/* Desktop nav */}
@@ -63,46 +70,39 @@ export default function Navbar({ onBook }) {
                 {label}
               </NavLink>
             ))}
-            {isAuthenticated ? (
-              <>
-                <NavLink
-                  to={dashboardPath}
-                  onClick={() => handleNavLinkClick()}
-                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                >
-                  Dashboard
-                </NavLink>
-                <button
-                  onClick={() => logoutUser()}
-                  className="nav-link"
-                  style={{ background: "none", border: "none", cursor: "pointer", font: "inherit" }}
-                >
-                  Logout
-                </button>
-              </>
-            ) : (
-              <>
-                <NavLink
-                  to="/login"
-                  onClick={() => handleNavLinkClick()}
-                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                >
-                  Login
-                </NavLink>
-                <NavLink
-                  to="/register"
-                  onClick={() => handleNavLinkClick()}
-                  className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
-                >
-                  Register
-                </NavLink>
-              </>
+            {isAuthenticated && (
+              <NavLink
+                to={dashboardPath}
+                onClick={() => handleNavLinkClick()}
+                className={({ isActive }) => `nav-link ${isActive ? 'active' : ''}`}
+              >
+                Dashboard
+              </NavLink>
             )}
             <LanguageSwitcher />
           </nav>
 
           {/* CTA + Burger */}
-          <div style={{ display: "flex", alignItems: "center", gap: "1rem" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
+            
+            {!isAuthenticated ? (
+              <button
+                className="btn btn-outline btn-sm nav-desktop"
+                onClick={() => onAuth('login')}
+                style={{ fontWeight: 600, padding: "0.55rem 1.4rem" }}
+              >
+                Sign In
+              </button>
+            ) : (
+              <button
+                onClick={() => logoutUser()}
+                className="btn btn-soft btn-sm nav-desktop"
+                style={{ fontWeight: 600, padding: "0.55rem 1.4rem" }}
+              >
+                Logout
+              </button>
+            )}
+
             <button
               className="btn btn-primary btn-sm nav-desktop"
               onClick={onBook}
@@ -148,7 +148,7 @@ export default function Navbar({ onBook }) {
           style={{
             overflow: "hidden",
             transition: "max-height 0.3s var(--ease)",
-            maxHeight: menuOpen ? "400px" : "0",
+            maxHeight: menuOpen ? "450px" : "0",
           }}
         >
           <div className="nav-mobile-menu">
@@ -174,36 +174,30 @@ export default function Navbar({ onBook }) {
                 <button
                   onClick={() => { logoutUser(); setMenuOpen(false); }}
                   className="nav-mobile-link"
-                  style={{ background: "none", border: "none", cursor: "pointer", font: "inherit", textAlign: "left", width: "100%" }}
+                  style={{ background: "none", border: "none", cursor: "pointer", font: "inherit", textAlign: "left", width: "100%", color: "var(--reserved)" }}
                 >
                   Logout
                 </button>
               </>
             ) : (
-              <>
-                <NavLink
-                  to="/login"
-                  className={({ isActive }) => `nav-mobile-link ${isActive ? 'active' : ''}`}
-                  onClick={() => handleNavLinkClick()}
-                >
-                  Login
-                </NavLink>
-                <NavLink
-                  to="/register"
-                  className={({ isActive }) => `nav-mobile-link ${isActive ? 'active' : ''}`}
-                  onClick={() => handleNavLinkClick()}
-                >
-                  Register
-                </NavLink>
-              </>
+              <button
+                onClick={() => { setMenuOpen(false); onAuth('login'); }}
+                className="nav-mobile-link"
+                style={{ background: "none", border: "none", cursor: "pointer", font: "inherit", textAlign: "left", width: "100%" }}
+              >
+                Sign In
+              </button>
             )}
-            <button
-              className="btn btn-primary btn-md"
-              style={{ marginTop: "1rem", width: "100%", padding: "0.85rem" }}
-              onClick={() => { setMenuOpen(false); onBook(); }}
-            >
-              {t("book_now")}
-            </button>
+            
+            <div style={{ padding: "1rem 0" }}>
+              <button
+                className="btn btn-primary btn-md"
+                style={{ width: "100%", padding: "0.85rem" }}
+                onClick={() => { setMenuOpen(false); onBook(); }}
+              >
+                {t("book_now")}
+              </button>
+            </div>
           </div>
         </div>
       </header>
