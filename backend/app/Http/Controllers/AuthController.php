@@ -45,14 +45,24 @@ class AuthController extends Controller
             'password' => 'required|string',
         ]);
 
-        if (!Auth::attempt($request->only('email', 'password'))) {
-            Log::warning('Login failed: Invalid credentials', ['email' => $request->email]);
-            throw ValidationException::withMessages([
-                'email' => ['The provided credentials do not match our records.'],
-            ]);
+        $user = User::where('email', $request->email)->first();
+
+        if (!$user) {
+            Log::warning('Login failed: Email not found', ['email' => $request->email]);
+            return response()->json([
+                'message' => 'You don’t have an account. Please sign up first.',
+                'errors' => ['email' => ['You don’t have an account. Please sign up first.']]
+            ], 404);
         }
 
-        $user = Auth::user();
+        if (!Hash::check($request->password, $user->password)) {
+            Log::warning('Login failed: Incorrect password', ['email' => $request->email]);
+            return response()->json([
+                'message' => 'Incorrect password',
+                'errors' => ['password' => ['Incorrect password']]
+            ], 401);
+        }
+
         $user->tokens()->delete(); // Revoke all previous tokens for this user
         $token = $user->createToken('auth_token')->plainTextToken;
 

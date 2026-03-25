@@ -5,8 +5,7 @@ import "./styles/globals.css";
 
 import Navbar          from "./components/Navbar";
 import Footer          from "./components/Footer";
-import Calendar        from "./components/Calendar";
-import StudioList      from "./components/StudioList";
+import HomeLayout      from "./pages/HomeLayout";
 import ReservationForm from "./components/ReservationForm";
 import AboutCompany    from "./components/AboutCompany";
 import OffersPage      from "./pages/OffersPage";
@@ -101,7 +100,6 @@ export default function App() {
 
 function AppContent() {
   const [selectedDate,   setSelectedDate]   = useState(null);
-  const [availability,   setAvailability]   = useState(null);
   const [showReservation, setShowReservation] = useState(false);
   const [preStudio,      setPreStudio]      = useState(null);
   const [toast,          setToast]          = useState(null);
@@ -113,9 +111,8 @@ function AppContent() {
   const navigate = useNavigate();
   const { t } = useTranslation();
 
-  const { isAuthenticated, loading: authLoading } = useAuth();
+  const { isAuthenticated } = useAuth();
   const location = useLocation();
-  const isAdminPage = location.pathname.startsWith("/admin");
 
   const openBook = useCallback((studio = null) => {
     if (!isAuthenticated) {
@@ -149,45 +146,7 @@ function AppContent() {
       <Navbar onBook={openBook} onAuth={handleAuth} />
 
       <Routes>
-        <Route path="/" element={
-          <>
-            <section id="homepage-content" className="section" style={{ background: "var(--gray-50)" }}>
-              <div>
-                <div style={{
-                  display: "grid",
-                  gridTemplateColumns: "320px 1fr",
-                  gap: "2.5rem",
-                  alignItems: "start",
-                }}>
-                  <div style={{ position: "sticky", top: "76px" }}>
-                    <Calendar
-                      selectedDate={selectedDate}
-                      onSelectDate={setSelectedDate}
-                      onAvailabilityLoad={setAvailability}
-                    />
-                  </div>
-
-                  <StudioList
-                    selectedDate={selectedDate}
-                    availability={availability}
-                    onBook={openBook}
-                  />
-                </div>
-              </div>
-
-              <style>{`
-                @media (max-width: 900px) {
-                  #homepage-content > div {
-                    grid-template-columns: 1fr !important;
-                  }
-                  #homepage-content > div > div:first-child {
-                    position: static !important;
-                  }
-                }
-              `}</style>
-            </section>
-          </>
-        } />
+        <Route path="/" element={<HomeLayout openBook={openBook} />} />
         <Route path="/offers" element={<OffersPage />} />
         <Route path="/about" element={<AboutCompany />} />
         <Route path="/studio/:id" element={<StudioPage />} />

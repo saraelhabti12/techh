@@ -1,24 +1,38 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import StudioCard from "./StudioCard";
 import Modal from "./Modal";
+import FilterBar from "./FilterBar";
 import { getStudios } from "../api/studioApi";
 import { useTranslation } from "react-i18next";
+import { extraStudios } from "../data/extraStudios";
 
 /**
  * StudioList
  * ─ Renders the studio grid and an inline detail modal.
- *   Shows availability status when `availability` prop is supplied.
  * Props:
- *   selectedDate  string | null
- *   availability  {studio_id, status, price}[]
- *   onBook        (studio) → void
+ *   selectedDate      string | null
+ *   selectedCategory  string | null
+ *   availability      {studio_id, status, price}[]
+ *   onBook            (studio) → void
+ *   externalFilters   object (optional)
  */
-export default function StudioList({ selectedDate, availability, onBook }) {
+export default function StudioList({ selectedDate, selectedCategory, availability, onBook, externalFilters }) {
   const [studios, setStudios] = useState([]);
   const [detail,  setDetail]    = useState(null);
   const [imgIdx,  setImgIdx]    = useState(0);
   const [loading, setLoading]   = useState(true);
   const { t, i18n } = useTranslation();
+
+  // Local state for internal FilterBar if no externalFilters provided
+  const [internalFilters, setInternalFilters] = useState({
+    search: '',
+    category: selectedCategory || '',
+    minPrice: '',
+    maxPrice: '',
+    availableOnly: false
+  });
+
+  const activeFilters = externalFilters || internalFilters;
 
   useEffect(() => {
     setLoading(true);
@@ -37,8 +51,77 @@ export default function StudioList({ selectedDate, availability, onBook }) {
   const availableCount = availability ? availability.filter(a => a.status === "available").length : 0;
   const reservedCount = availability ? availability.filter(a => a.status === "reserved").length : 0;
 
+  // ── Combined Filtering Logic ──
+  const filteredStudios = useMemo(() => {
+    const { search, category, minPrice, maxPrice, availableOnly } = activeFilters;
+
+    // 1. Identify base studios
+    let baseStudios = studios;
+    
+    if (category) {
+      const categoryKeywords = {
+        content: ['Video Studio', 'Streaming Studio', 'YouTube Setup', 'Ads Production', 'Content', 'Creation'],
+        podcast: ['Solo Podcast Room', 'Interview Studio', 'Multi-Mic Setup', 'Podcast', 'Audio'],
+        shooting: ['Product Studio', 'Fashion Studio', 'Lighting Studio', 'Shooting', 'Video', 'Photo'],
+        girly: ['Makeup Studio', 'Influencer Room', 'Beauty Setup', 'Girly', 'Pink', 'Aesthetic'],
+        birthday: ['Party Studio', 'Kids Room', 'Event Setup', 'Birthday', 'Celebration', 'Party']
+      };
+
+      const keywords = categoryKeywords[category] || [];
+      const apiResults = studios.filter(s => {
+        const searchString = `${s.name} ${s.tagline} ${s.description} ${s.features?.join(' ')}`.toLowerCase();
+        return keywords.some(k => searchString.includes(k.toLowerCase())) || 
+               (s.category && s.category.toLowerCase() === category.toLowerCase());
+      });
+
+      if (apiResults.length === 0) {
+        baseStudios = [...studios, ...extraStudios.filter(s => s.category === category)];
+      }
+    }
+
+    // 2. Apply filters
+    return baseStudios.filter(s => {
+      // Category
+      if (category) {
+        const categoryKeywords = {
+          content: ['Video Studio', 'Streaming Studio', 'YouTube Setup', 'Ads Production', 'Content', 'Creation'],
+          podcast: ['Solo Podcast Room', 'Interview Studio', 'Multi-Mic Setup', 'Podcast', 'Audio'],
+          shooting: ['Product Studio', 'Fashion Studio', 'Lighting Studio', 'Shooting', 'Video', 'Photo'],
+          girly: ['Makeup Studio', 'Influencer Room', 'Beauty Setup', 'Girly', 'Pink', 'Aesthetic'],
+          birthday: ['Party Studio', 'Kids Room', 'Event Setup', 'Birthday', 'Celebration', 'Party']
+        };
+        const keywords = categoryKeywords[category] || [];
+        const matchesCategory = keywords.some(k => `${s.name} ${s.tagline} ${s.description}`.toLowerCase().includes(k.toLowerCase())) || 
+                               (s.category && s.category.toLowerCase() === category.toLowerCase());
+        if (!matchesCategory) return false;
+      }
+
+      // Search
+      if (search && !s.name.toLowerCase().includes(search.toLowerCase()) && 
+          !s.tagline.toLowerCase().includes(search.toLowerCase())) {
+        return false;
+      }
+
+      // Price
+      const price = avail(s.id)?.price || s.price_per_hour;
+      if (minPrice && price < parseFloat(minPrice)) return false;
+      if (maxPrice && price > parseFloat(maxPrice)) return false;
+
+      // Availability
+      if (availableOnly) {
+        const status = avail(s.id)?.status || "available";
+        if (status !== "available") return false;
+      }
+
+      return true;
+    });
+  }, [studios, activeFilters, availability]);
+
   return (
     <div id="studios">
+      {/* Only show internal FilterBar if no externalFilters provided */}
+      {!externalFilters && <FilterBar filters={activeFilters} setFilters={setInternalFilters} />}
+
       {selectedDate && (
         <div className="availability-banner animate-fadeIn">
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
@@ -64,6 +147,14 @@ export default function StudioList({ selectedDate, availability, onBook }) {
         </div>
       )}
 
+      {(activeFilters.search || activeFilters.category || activeFilters.minPrice || activeFilters.maxPrice || activeFilters.availableOnly) && filteredStudios.length === 0 && !loading && (
+        <div style={{ textAlign: 'center', padding: '3rem', background: 'var(--white)', borderRadius: 'var(--r-lg)', border: '1px solid var(--gray-200)', marginBottom: '2rem' }}>
+          <span style={{ fontSize: '3rem', marginBottom: '1rem', display: 'block' }}>🔍</span>
+          <h3 style={{ fontWeight: 700, color: 'var(--gray-900)' }}>{t('no_studios_match_filters') || "No studios match your filters"}</h3>
+          <p style={{ color: 'var(--gray-500)' }}>{t('try_adjusting_filters') || "Try adjusting your filters to find what you're looking for."}</p>
+        </div>
+      )}
+
       <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
@@ -82,7 +173,7 @@ export default function StudioList({ selectedDate, availability, onBook }) {
              </div>
           ))
         ) : (
-          (studios || []).map((s, i) => {
+          (filteredStudios || []).map((s, i) => {
             const a = avail(s.id);
             return (
               <StudioCard
@@ -103,88 +194,51 @@ export default function StudioList({ selectedDate, availability, onBook }) {
       <Modal isOpen={!!detail} onClose={() => setDetail(null)} maxWidth="850px">
         {detail && (
           <div className="animate-fadeIn">
-            {/* Hero Image */}
             <div style={{ position: "relative", height: 380, overflow: "hidden", borderRadius: "16px", marginBottom: "2rem" }}>
               <img
                 src={detail.gallery?.[imgIdx] || detail.image}
                 alt={detail.name}
                 style={{ width: "100%", height: "100%", objectFit: "cover", transition: "opacity 0.4s ease" }}
               />
-              <div style={{
-                position: "absolute", inset: 0,
-                background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)",
-              }} />
-
-              {/* Gallery navigation dots */}
+              <div style={{ position: "absolute", inset: 0, background: "linear-gradient(to top, rgba(0,0,0,0.6) 0%, transparent 60%)" }} />
               {detail.gallery?.length > 1 && (
-                <div style={{
-                  position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)",
-                  display: "flex", gap: "0.6rem",
-                }}>
+                <div style={{ position: "absolute", bottom: 20, left: "50%", transform: "translateX(-50%)", display: "flex", gap: "0.6rem" }}>
                   {detail.gallery.map((_, i) => (
-                    <button key={i} onClick={() => setImgIdx(i)} style={{
-                      width: i === imgIdx ? 28 : 10, height: 10, borderRadius: 50,
-                      background: i === imgIdx ? "#fff" : "rgba(255,255,255,0.5)",
-                      border: "none", cursor: "pointer", transition: "all 0.3s ease",
-                      padding: 0,
-                    }} />
+                    <button key={i} onClick={() => setImgIdx(i)} style={{ width: i === imgIdx ? 28 : 10, height: 10, borderRadius: 50, background: i === imgIdx ? "#fff" : "rgba(255,255,255,0.5)", border: "none", cursor: "pointer", transition: "all 0.3s ease", padding: 0 }} />
                   ))}
                 </div>
               )}
-
-              {/* Title on image */}
               <div style={{ position: "absolute", bottom: 30, left: 30 }}>
                 <h2 className="font-display" style={{ color: "#fff", marginBottom: "0.4rem", fontSize: "2.5rem", lineHeight: 1 }}>{detail.name}</h2>
                 <div style={{ fontSize: "1rem", color: "rgba(255,255,255,0.9)", fontWeight: 500 }}>{detail.tagline}</div>
               </div>
             </div>
-
-            {/* Info Section */}
-            <div style={{
-              display: "flex", alignItems: "center", justifyContent: "space-between",
-              marginBottom: "2.5rem", flexWrap: "wrap", gap: "1.5rem",
-            }}>
+            <div style={{ display: "flex", alignItems: "center", justifyContent: "space-between", marginBottom: "2.5rem", flexWrap: "wrap", gap: "1.5rem" }}>
               <div>
                 <span style={{ fontSize: "2rem", color: "var(--gray-900)", fontWeight: 800 }}>MAD {detail.price_per_hour}</span>
                 <span style={{ fontSize: "1rem", color: "var(--gray-500)", marginLeft: "0.4rem" }}>/ hour</span>
                 <span style={{ fontSize: "0.9rem", color: "var(--gray-200)", margin: "0 1.5rem" }}>|</span>
-                <span style={{ fontSize: "1rem", color: "var(--gray-600)", fontWeight: 500 }}>
-                  {t('min_session', { hours: detail.min_hours })}
-                </span>
+                <span style={{ fontSize: "1rem", color: "var(--gray-600)", fontWeight: 500 }}>{t('min_session', { hours: detail.min_hours })}</span>
               </div>
               <span className="tag" style={{ background: 'var(--available-bg)', color: 'var(--available)', fontSize: "0.9rem", padding: "0.6rem 1.2rem", borderRadius: "12px", fontWeight: 700, display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                 <span className="dot" style={{ background: "var(--available)", width: 8, height: 8 }} /> {t('available_now')}
               </span>
             </div>
-
             <div style={{ marginBottom: "2.5rem" }}>
               <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray-400)', marginBottom: '1rem', fontWeight: 800 }}>{t('about_this_space')}</h4>
-              <p style={{ fontSize: "1.1rem", lineHeight: "1.8", color: "var(--gray-700)", fontWeight: 400 }}>
-                {detail.description}
-              </p>
+              <p style={{ fontSize: "1.1rem", lineHeight: "1.8", color: "var(--gray-700)", fontWeight: 400 }}>{detail.description}</p>
             </div>
-
             <div style={{ marginBottom: "3rem" }}>
               <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', letterSpacing: '0.1em', color: 'var(--gray-400)', marginBottom: '1.25rem', fontWeight: 800 }}>{t('included_amenities')}</h4>
               <div style={{ display: "flex", flexWrap: "wrap", gap: "0.75rem" }}>
                  {(detail.features || []).map(f => (
-                  <span key={f} style={{ padding: "0.6rem 1.25rem", fontSize: "0.9rem", background: "var(--gray-50)", color: "var(--gray-700)", border: "1px solid var(--gray-100)", borderRadius: "12px", fontWeight: 600 }}>
-                    ✓ {f}
-                  </span>
+                  <span key={f} style={{ padding: "0.6rem 1.25rem", fontSize: "0.9rem", background: "var(--gray-50)", color: "var(--gray-700)", border: "1px solid var(--gray-100)", borderRadius: "12px", fontWeight: 600 }}>✓ {f}</span>
                 ))}
               </div>
             </div>
-
-            {/* Actions */}
             <div style={{ display: "flex", gap: "1.25rem", paddingTop: '1.5rem', borderTop: '1px solid var(--gray-100)' }}>
               <button className="btn btn-outline" style={{ flex: 1, height: "56px", borderRadius: "14px" }} onClick={() => setDetail(null)}>{t('close')}</button>
-              <button
-                className="btn btn-primary"
-                style={{ flex: 2, height: "56px", borderRadius: "14px", fontSize: "1.1rem" }}
-                onClick={() => { setDetail(null); onBook?.(detail); }}
-              >
-                {t('book_this_studio_now')} →
-              </button>
+              <button className="btn btn-primary" style={{ flex: 2, height: "56px", borderRadius: "14px", fontSize: "1.1rem" }} onClick={() => { setDetail(null); onBook?.(detail); }}>{t('book_this_studio_now')} →</button>
             </div>
           </div>
         )}
