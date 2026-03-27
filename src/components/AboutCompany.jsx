@@ -65,7 +65,7 @@ export default function AboutCompany() {
                 fontSize: "1rem", color: "#fff",
               }}>✦</div>
               <div>
-                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "0.95rem", color: "#1A1A1A", lineHeight: 1.2 }}>Since 2020</div>
+                <div style={{ fontFamily: "'Cormorant Garamond',serif", fontSize: "0.95rem", color: "#1A1A1A", lineHeight: 1.2 }}>Since 2026</div>
                 <div style={{ fontSize: "0.65rem", color: "#1A1A1A" }}>Tangier, Morocco</div>
               </div>
             </div>
@@ -79,7 +79,7 @@ export default function AboutCompany() {
               Becomes Reality
             </h2>
             <p className="body-md" style={{ marginBottom: "1.3rem" }}>
-              Founded in Tangier in 2020, TechStudio is a sanctuary for creative professionals. We believe every vision deserves a perfect space — which is why we built five uniquely designed studios for every style of storytelling.
+              Founded in Tangier in 2026, TechStudio is a sanctuary for creative professionals. We believe every vision deserves a perfect space — which is why we built five uniquely designed studios for every style of storytelling.
             </p>
             <p className="body-md" style={{ marginBottom: "2rem" }}>
               From intimate podcast sessions to large-scale commercial shoots, our team is dedicated to making every booking seamless, inspiring, and unforgettable.

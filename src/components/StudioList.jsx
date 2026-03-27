@@ -4,7 +4,6 @@ import Modal from "./Modal";
 import FilterBar from "./FilterBar";
 import { getStudios } from "../api/studioApi";
 import { useTranslation } from "react-i18next";
-import { extraStudios } from "../data/extraStudios";
 
 /**
  * StudioList
@@ -55,44 +54,10 @@ export default function StudioList({ selectedDate, selectedCategory, availabilit
   const filteredStudios = useMemo(() => {
     const { search, category, minPrice, maxPrice, availableOnly } = activeFilters;
 
-    // 1. Identify base studios
-    let baseStudios = studios;
-    
-    if (category) {
-      const categoryKeywords = {
-        content: ['Video Studio', 'Streaming Studio', 'YouTube Setup', 'Ads Production', 'Content', 'Creation'],
-        podcast: ['Solo Podcast Room', 'Interview Studio', 'Multi-Mic Setup', 'Podcast', 'Audio'],
-        shooting: ['Product Studio', 'Fashion Studio', 'Lighting Studio', 'Shooting', 'Video', 'Photo'],
-        girly: ['Makeup Studio', 'Influencer Room', 'Beauty Setup', 'Girly', 'Pink', 'Aesthetic'],
-        birthday: ['Party Studio', 'Kids Room', 'Event Setup', 'Birthday', 'Celebration', 'Party']
-      };
-
-      const keywords = categoryKeywords[category] || [];
-      const apiResults = studios.filter(s => {
-        const searchString = `${s.name} ${s.tagline} ${s.description} ${s.features?.join(' ')}`.toLowerCase();
-        return keywords.some(k => searchString.includes(k.toLowerCase())) || 
-               (s.category && s.category.toLowerCase() === category.toLowerCase());
-      });
-
-      if (apiResults.length === 0) {
-        baseStudios = [...studios, ...extraStudios.filter(s => s.category === category)];
-      }
-    }
-
-    // 2. Apply filters
-    return baseStudios.filter(s => {
-      // Category
+    return studios.filter(s => {
+      // Category filtering using the new dynamic structure
       if (category) {
-        const categoryKeywords = {
-          content: ['Video Studio', 'Streaming Studio', 'YouTube Setup', 'Ads Production', 'Content', 'Creation'],
-          podcast: ['Solo Podcast Room', 'Interview Studio', 'Multi-Mic Setup', 'Podcast', 'Audio'],
-          shooting: ['Product Studio', 'Fashion Studio', 'Lighting Studio', 'Shooting', 'Video', 'Photo'],
-          girly: ['Makeup Studio', 'Influencer Room', 'Beauty Setup', 'Girly', 'Pink', 'Aesthetic'],
-          birthday: ['Party Studio', 'Kids Room', 'Event Setup', 'Birthday', 'Celebration', 'Party']
-        };
-        const keywords = categoryKeywords[category] || [];
-        const matchesCategory = keywords.some(k => `${s.name} ${s.tagline} ${s.description}`.toLowerCase().includes(k.toLowerCase())) || 
-                               (s.category && s.category.toLowerCase() === category.toLowerCase());
+        const matchesCategory = s.category?.name === category || s.category_name === category;
         if (!matchesCategory) return false;
       }
 
@@ -123,7 +88,7 @@ export default function StudioList({ selectedDate, selectedCategory, availabilit
       {!externalFilters && <FilterBar filters={activeFilters} setFilters={setInternalFilters} />}
 
       {selectedDate && (
-        <div className="availability-banner animate-fadeIn">
+        <div className="availability-banner animate-fadeIn" style={{ marginBottom: "24px" }}>
           <div style={{ display: "flex", alignItems: "center", gap: "0.75rem" }}>
             <span style={{ fontSize: "1.2rem" }}>📅</span>
             <span style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.1rem", color: "var(--gray-900)" }}>
@@ -158,7 +123,7 @@ export default function StudioList({ selectedDate, selectedCategory, availabilit
       <div style={{
         display: "grid",
         gridTemplateColumns: "repeat(auto-fill, minmax(300px, 1fr))",
-        gap: "1.5rem",
+        gap: "24px",
       }}>
         {loading ? (
           Array.from({ length: 4 }).map((_, i) => (

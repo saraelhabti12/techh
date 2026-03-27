@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate, useParams } from 'react-router-dom';
 import { getAdminStudios, createAdminStudio, updateAdminStudio } from '../api/adminApi';
+import { getCategories } from '../api/studioApi';
 import { FaArrowLeft, FaCloudUploadAlt, FaTrash } from 'react-icons/fa';
 
 const AdminStudioForm = () => {
@@ -8,13 +9,19 @@ const AdminStudioForm = () => {
     const navigate = useNavigate();
     const [loading, setLoading] = useState(id ? true : false);
     const [saving, setSaving] = useState(false);
+    const [categories, setCategories] = useState([]);
     const [formData, setFormData] = useState({
         name: "", tagline: "", description: "", price_per_hour: "", 
-        image: "", features: [], rating: 4.5
+        image: "", features: [], rating: 4.5, category_id: ""
     });
     const [featureInput, setFeatureInput] = useState("");
 
     useEffect(() => {
+        // Fetch categories first
+        getCategories().then(res => {
+            setCategories(res.data || []);
+        });
+
         if (id) {
             getAdminStudios().then(res => {
                 const studios = res.data?.data || res.data || res;
@@ -22,7 +29,8 @@ const AdminStudioForm = () => {
                 if (studio) {
                     setFormData({
                         ...studio,
-                        features: studio.features || []
+                        features: studio.features || [],
+                        category_id: studio.category_id || ""
                     });
                 }
                 setLoading(false);
@@ -101,6 +109,21 @@ const AdminStudioForm = () => {
                             <label className="field-label">Price per Hour (MAD)</label>
                             <input className="field-input" type="number" required value={formData.price_per_hour} onChange={e => setFormData({...formData, price_per_hour: e.target.value})} />
                         </div>
+                    </div>
+
+                    <div className="field">
+                        <label className="field-label">Category</label>
+                        <select 
+                            className="field-input" 
+                            required 
+                            value={formData.category_id} 
+                            onChange={e => setFormData({...formData, category_id: e.target.value})}
+                        >
+                            <option value="">Select a Category</option>
+                            {categories.map(cat => (
+                                <option key={cat.id} value={cat.id}>{cat.name}</option>
+                            ))}
+                        </select>
                     </div>
 
                     <div className="field">

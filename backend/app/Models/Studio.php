@@ -18,6 +18,11 @@ class Studio extends Model
         'gallery' => 'array',
     ];
 
+    public function category()
+    {
+        return $this->belongsTo(Category::class);
+    }
+
     public function reservations()
     {
         return $this->hasMany(Reservation::class);
@@ -27,4 +32,9 @@ class Studio extends Model
     {
         return $this->hasMany(ReservationSlot::class);
     }
-}
+
+    public function favoritedBy()
+    {
+        return $this->belongsToMany(User::class, 'favorites', 'studio_id', 'user_id')->withTimestamps();
+    }
+    }

@@ -19,9 +19,10 @@ const Modal = ({ isOpen, onClose, title, children, footer, maxWidth = '850px' })
   if (!isOpen) return null;
 
   return createPortal(
-    <div className="modal-overlay" onClick={onClose}>
+    <div className="booking-wrapper">
+      <div className="overlay" onClick={onClose}></div>
       <div 
-        className="modal-container" 
+        className="form-container" 
         style={{ maxWidth }} 
         onClick={(e) => e.stopPropagation()}
       >
@@ -31,7 +32,7 @@ const Modal = ({ isOpen, onClose, title, children, footer, maxWidth = '850px' })
         
         {title && (
           <div className="modal-header">
-            <h3>{title}</h3>
+            <h3 style={{ margin: 0 }}>{title}</h3>
           </div>
         )}
         

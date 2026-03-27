@@ -1,5 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from "react";
-import { createReservation, getStudios, getStudioAvailability } from "../api/studioApi";
+import { createReservation, getStudios, getStudioAvailability, getCategories } from "../api/studioApi";
 import Modal from "./Modal";
 import Calendar from "./Calendar";
 import BookingReceiptModal from "./BookingReceiptModal";
@@ -49,7 +49,7 @@ function StepPill({ step, current, label }) {
   );
 }
 
-function Step1({ data, onChange, t }) {
+function Step1({ data, onChange, categories, t }) {
   const SERVICES = [
     { id: "studio", label: t("studio_only"), icon: <FaBuilding /> },
     { id: "equipment", label: t("studio_equipment"), icon: <FaVideo /> },
@@ -80,6 +80,35 @@ function Step1({ data, onChange, t }) {
           );
         })}
       </div>
+
+      {data.serviceType === "studio" && (
+        <div className="animate-fadeIn" style={{ marginBottom: "2rem" }}>
+          <h4 className="eyebrow" style={{ marginBottom: '1rem' }}>{t("select_category")}</h4>
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(140px, 1fr))", gap: "1rem" }}>
+            {categories.map(cat => {
+              const isSel = data.category?.id === cat.id;
+              return (
+                <div key={cat.id} onClick={() => {
+                  onChange("category", cat);
+                  onChange("studios", []);
+                  onChange("slots", []);
+                }}
+                  style={{
+                    borderRadius: "16px", padding: "1rem", textAlign: "center", cursor: "pointer",
+                    border: `2px solid ${isSel ? "var(--pink-500)" : "var(--gray-100)"}`,
+                    background: isSel ? "var(--pink-50)" : "var(--white)",
+                    boxShadow: isSel ? "var(--shadow-sm)" : "none",
+                    transition: "all 0.2s",
+                  }}
+                >
+                  <div style={{ fontSize: "1.5rem", marginBottom: "0.5rem" }}>{cat.icon || '🎬'}</div>
+                  <div style={{ fontSize: "0.8rem", fontWeight: 700, color: isSel ? "var(--pink-600)" : "var(--gray-700)" }}>{cat.name}</div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      )}
 
       {(data.serviceType === "equipment" || data.serviceType === "team") && (
         <div className="animate-fadeIn" style={{ marginBottom: "2rem" }}>
@@ -143,43 +172,61 @@ function Step1({ data, onChange, t }) {
 }
 
 
-function Step2({ data, onChange, studios, t }) {
+function Step2({ data, onChange, studios, loading, t }) {
   const toggleStudio = (s) => {
-    const current = data.studios || [];
-    const exists = current.find(item => item.id === s.id);
-    onChange("studios", exists ? current.filter(item => item.id !== s.id) : [...current, s]);
+    // Single selection: set to the new studio
+    onChange("studios", [s]);
     onChange("slots", []);
   };
 
   return (
     <div className="animate-fadeUp">
-      <h2 className="heading-md" style={{ marginBottom: "0.5rem" }}>{t("select_studios")}</h2>
-      <p className="body-sm" style={{ marginBottom: "1.5rem" }}>{t("select_studios_desc")}</p>
+      <h2 className="heading-md" style={{ marginBottom: "0.5rem" }}>{t("select_studio")}</h2>
+      <p className="body-sm" style={{ marginBottom: "1.5rem" }}>{t("select_studio_desc")}</p>
 
-      <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: "1.5rem" }}>
-        {studios.map(s => {
-          const sel = (data.studios || []).some(item => (item?.id === s.id || item === s.id));
-          return (
-            <div key={s.id} onClick={() => toggleStudio(s)}
-              style={{
-                borderRadius: "20px", overflow: "hidden", cursor: "pointer",
-                border: `2px solid ${sel ? "var(--pink-500)" : "var(--gray-100)"}`,
-                boxShadow: sel ? "var(--shadow-lg)" : "var(--shadow-sm)",
-                transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-                transform: sel ? 'scale(1.02)' : 'scale(1)'
-              }}>
-              <div style={{ height: 140, position: 'relative' }}>
-                <img src={s.image} alt={s.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
-                {sel && <div style={{ position: 'absolute', top: '0.75rem', right: '0.75rem', background: 'var(--pink-500)', color: '#fff', width: 24, height: 24, borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', border: '2px solid #fff' }}><FaCheck size={10} /></div>}
+      {loading ? (
+        <div style={{ textAlign: 'center', padding: '3rem' }}><span className="spinner" /></div>
+      ) : studios.length === 0 ? (
+        <div style={{ padding: '3rem', textAlign: 'center', background: 'var(--gray-50)', borderRadius: '20px', border: '1.5px dashed var(--gray-200)' }}>
+          <p style={{ color: 'var(--gray-500)', fontWeight: 500 }}>{data.category ? t("no_studios_in_category") : t("select_category_first")}</p>
+        </div>
+      ) : (
+        <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fill,minmax(220px,1fr))", gap: "1.5rem" }}>
+          {studios.map(s => {
+            const sel = (data.studios || []).some(item => (item?.id === s.id || item === s.id));
+            return (
+              <div key={s.id} onClick={() => toggleStudio(s)}
+                style={{
+                  borderRadius: "20px", overflow: "hidden", cursor: "pointer",
+                  border: `2px solid ${sel ? "var(--pink-500)" : "var(--gray-100)"}`,
+                  boxShadow: sel ? "var(--shadow-lg)" : "var(--shadow-sm)",
+                  transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
+                  transform: sel ? 'scale(1.02)' : 'scale(1)',
+                  background: "var(--white)"
+                }}>
+                <div style={{ height: 140, position: 'relative' }}>
+                  <img src={s.image} alt={s.name} style={{ width: "100%", height: "100%", objectFit: "cover" }} />
+                  {sel && (
+                    <div style={{ 
+                      position: 'absolute', top: '0.75rem', right: '0.75rem', 
+                      background: 'var(--pink-500)', color: '#fff', 
+                      width: 28, height: 28, borderRadius: '50%', 
+                      display: 'flex', alignItems: 'center', justifyContent: 'center', 
+                      border: '2px solid #fff', boxShadow: 'var(--shadow-sm)'
+                    }}>
+                      <FaCheck size={12} />
+                    </div>
+                  )}
+                </div>
+                <div style={{ padding: "1.25rem", background: sel ? "var(--pink-50)" : "var(--white)" }}>
+                  <div style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "0.25rem", color: sel ? "var(--pink-600)" : "var(--gray-900)" }}>{s.name}</div>
+                  <div style={{ fontSize: "1.1rem", fontWeight: 800, color: 'var(--pink-500)' }}>{s.price_per_hour} <small style={{ fontSize: '0.7rem', opacity: 0.6 }}>MAD/hr</small></div>
+                </div>
               </div>
-              <div style={{ padding: "1.25rem", background: sel ? "var(--pink-50)" : "var(--white)" }}>
-                <div style={{ fontSize: "1rem", fontWeight: 700, marginBottom: "0.25rem" }}>{s.name}</div>
-                <div style={{ fontSize: "1.1rem", fontWeight: 800, color: 'var(--pink-500)' }}>{s.price_per_hour} <small style={{ fontSize: '0.7rem', opacity: 0.6 }}>MAD/hr</small></div>
-              </div>
-            </div>
-          );
-        })}
-      </div>
+            );
+          })}
+        </div>
+      )}
     </div>
   );
 }
@@ -187,8 +234,8 @@ function Step2({ data, onChange, studios, t }) {
 function Step3({ data, onChange, t }) {
   const TIME_SLOTS_PERIODS = [
     { id: "morning",   label: t("morning"),   time: "08:00 - 12:00", icon: <FaCalendarAlt /> },
-    { id: "afternoon", label: t("afternoon"), time: "12:00 - 18:00",  icon: <FaCalendarAlt /> },
-    { id: "evening",   label: t("evening"),   time: "18:00 - 23:59",  icon: <FaCalendarAlt /> },
+    { id: "afternoon", label: t("afternoon"), time: "13:00 - 18:00",  icon: <FaCalendarAlt /> },
+    { id: "evening",   label: t("evening"),   time: "19:00 - 23:59",  icon: <FaCalendarAlt /> },
   ];
 
   const [selectedDate, setSelectedDate] = useState(data.slots.length > 0 ? data.slots[0].date : (new Date().toISOString().split('T')[0]));
@@ -377,44 +424,82 @@ function Step4({ data, onChange, totalPrice, totalHours, t }) {
   return (
     <div className="animate-fadeUp">
       <h2 className="heading-md" style={{ marginBottom: "0.5rem" }}>{t("confirm_identity")}</h2>
-      <p className="body-sm" style={{ marginBottom: "2.5rem" }}>{t("confirm_desc")}</p>
+      <p className="body-sm" style={{ marginBottom: "2rem" }}>{t("confirm_desc")}</p>
 
-      <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-        <div className="field">
-          <label className="field-label">{t("full_name")}</label>
+      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.5rem', marginBottom: '2rem' }}>
+        <div className="field" style={{ gridColumn: 'span 2' }}>
+          <label className="field-label" style={{ fontWeight: 700, color: 'var(--gray-700)' }}>{t("full_name")}</label>
           <div style={{ position: 'relative' }}>
-            <FaUser style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
-            <input className="field-input" style={{ paddingLeft: '2.8rem' }} value={data.name} onChange={e => onChange("name", e.target.value)} placeholder="John Doe" />
+            <FaUser style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--pink-500)', opacity: 0.7 }} />
+            <input 
+              className="field-input" 
+              style={{ paddingLeft: '2.8rem', borderRadius: '12px', border: '1.5px solid var(--gray-200)', height: '52px' }} 
+              value={data.name} 
+              onChange={e => onChange("name", e.target.value)} 
+              placeholder="Your name" 
+            />
           </div>
         </div>
         <div className="field">
-          <label className="field-label">{t("email_address")}</label>
+          
+          <label className="field-label" style={{ fontWeight: 700, color: 'var(--gray-700)' }}>{t("email_address")}</label>
           <div style={{ position: 'relative' }}>
-            <FaEnvelope style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
-            <input className="field-input" style={{ paddingLeft: '2.8rem' }} value={data.email} onChange={e => onChange("email", e.target.value)} placeholder="john@example.com" />
+            <FaEnvelope style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--pink-500)', opacity: 0.7 }} />
+            <input 
+              className="field-input" 
+              style={{ paddingLeft: '2.8rem', borderRadius: '12px', border: '1.5px solid var(--gray-200)', height: '52px' }} 
+              value={data.email} 
+              onChange={e => onChange("email", e.target.value)} 
+              placeholder="john@example.com" 
+            />
           </div>
         </div>
         <div className="field">
-          <label className="field-label">{t("phone_number")}</label>
+          <label className="field-label" style={{ fontWeight: 700, color: 'var(--gray-700)' }}>{t("phone_number")}</label>
           <div style={{ position: 'relative' }}>
-            <FaPhone style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--gray-400)' }} />
-            <input className="field-input" style={{ paddingLeft: '2.8rem' }} value={data.phone} onChange={e => onChange("phone", e.target.value)} placeholder="+212 ..." />
+            <FaPhone style={{ position: 'absolute', left: '1rem', top: '50%', transform: 'translateY(-50%)', color: 'var(--pink-500)', opacity: 0.7 }} />
+            <input 
+              className="field-input" 
+              style={{ paddingLeft: '2.8rem', borderRadius: '12px', border: '1.5px solid var(--gray-200)', height: '52px' }} 
+              value={data.phone} 
+              onChange={e => onChange("phone", e.target.value)} 
+              placeholder="+212 ..." 
+            />
           </div>
         </div>
+      </div>
 
-        <div style={{ marginTop: '1rem', padding: '1.5rem', background: 'var(--gray-50)', borderRadius: '16px', border: '1px solid var(--gray-200)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '0.5rem' }}>
-                <span style={{ fontSize: '0.9rem', color: 'var(--gray-500)' }}>{t("total_studios")}</span>
-                <span style={{ fontWeight: 700 }}>{data.studios.length}</span>
+      <div style={{ 
+        padding: '2rem', 
+        background: 'var(--pink-50)', 
+        borderRadius: '24px', 
+        border: '1.5px solid var(--pink-100)',
+        boxShadow: 'var(--shadow-sm)'
+      }}>
+        <h4 className="eyebrow" style={{ marginBottom: '1.5rem', color: 'var(--pink-600)' }}>{t("booking_summary")}</h4>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.95rem', color: 'var(--gray-600)', fontWeight: 500 }}>{t("selected_studio")}</span>
+            <span style={{ fontWeight: 700, color: 'var(--gray-900)' }}>{data.studios[0]?.name || 'N/A'}</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.95rem', color: 'var(--gray-600)', fontWeight: 500 }}>{t("total_duration")}</span>
+            <span style={{ fontWeight: 700, color: 'var(--gray-900)' }}>{totalHours} {t("hours")}</span>
+          </div>
+          <div style={{ 
+            display: 'flex', 
+            justifyContent: 'space-between', 
+            alignItems: 'center',
+            paddingTop: '1.25rem', 
+            marginTop: '0.5rem',
+            borderTop: '2px dashed var(--pink-200)' 
+          }}>
+            <span style={{ fontSize: '1.1rem', fontWeight: 800, color: 'var(--gray-900)' }}>{t("total_amount")}</span>
+            <div style={{ textAlign: 'right' }}>
+              <span style={{ fontSize: '1.75rem', fontWeight: 900, color: 'var(--pink-500)' }}>MAD {totalPrice}</span>
+              <p style={{ fontSize: '0.7rem', color: 'var(--gray-400)', margin: 0 }}>{t("taxes_included")}</p>
             </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '1rem' }}>
-                <span style={{ fontSize: '0.9rem', color: 'var(--gray-500)' }}>{t("total_hours")}</span>
-                <span style={{ fontWeight: 700 }}>{totalHours}</span>
-            </div>
-            <div style={{ display: 'flex', justifyContent: 'space-between', paddingTop: '1rem', borderTop: '1.5px dashed var(--gray-300)' }}>
-                <span style={{ fontSize: '1.1rem', fontWeight: 700 }}>{t("total_price")}</span>
-                <span style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--pink-500)' }}>MAD {totalPrice}</span>
-            </div>
+          </div>
         </div>
       </div>
     </div>
@@ -425,29 +510,36 @@ export default function ReservationForm({ preselectedStudio, preselectedDate, on
   const { t } = useTranslation();
   const [step, setStep] = useState(1);
   const [data, setData] = useState({
-    serviceType: "studio", equipment: [], team: [], 
+    serviceType: "studio", category: null, equipment: [], team: [], 
     studios: preselectedStudio ? [preselectedStudio] : [], 
     slots: [], name: "", email: "", phone: ""
   });
+  const [categories, setCategories] = useState([]);
   const [studios, setStudios] = useState([]);
   const [loading, setLoading] = useState(false);
-  const [resId, setResId] = useState(null);
+  const [studiosLoading, setStudiosLoading] = useState(false);
   const [bookingData, setBookingData] = useState(null);
 
+  // Fetch Categories on mount
   useEffect(() => {
-    getStudios().then(res => {
-        const fetched = res?.data || res || [];
-        setStudios(fetched);
-        
-        if (p => p.studios.length === 1 && (typeof p.studios[0] === 'number' || typeof p.studios[0] === 'string')) {
-          setData(p => {
-              const found = fetched.find(s => String(s.id) === String(p.studios[0]));
-              if (found) return { ...p, studios: [found] };
-              return p;
-          });
-        }
-    });
+    getCategories().then(res => {
+      setCategories(res?.data || []);
+    }).catch(err => console.error("Fetch Categories Error:", err));
   }, []);
+
+  // Fetch Studios when step 2 is active or category changes
+  useEffect(() => {
+    if (step === 2) {
+      setStudiosLoading(true);
+      getStudios(data.category?.id).then(res => {
+        setStudios(res?.data || []);
+        setStudiosLoading(false);
+      }).catch(err => {
+        console.error("Fetch Studios Error:", err);
+        setStudiosLoading(false);
+      });
+    }
+  }, [step, data.category]);
 
   const update = (key, val) => setData(p => ({ ...p, [key]: val }));
 
@@ -469,7 +561,7 @@ export default function ReservationForm({ preselectedStudio, preselectedDate, on
   const handleNext = async () => {
     if (step === 4) {
       if (!data.name || !data.email || !data.phone) {
-        alert("Please fill in all contact details.");
+        alert(t("errors.fill_contact_details"));
         return;
       }
       setLoading(true);
@@ -491,25 +583,26 @@ export default function ReservationForm({ preselectedStudio, preselectedDate, on
           }))
         };
 
-        console.log("Reservation Payload:", payload);
-
         const res = await createReservation(payload);
         setBookingData(res.data || res);
-        setResId(res.data?.booking_reference || res.booking_reference || res.data?.id);
         setStep(5);
       } catch (err) {
         console.error("Reservation Error:", err);
-        alert(err.message || "Booking failed.");
+        alert(err.message || t("errors.booking_failed"));
       } finally {
         setLoading(false);
       }
     } else {
+      if (step === 1 && data.serviceType === "studio" && !data.category) {
+        alert(t("errors.select_category"));
+        return;
+      }
       if (step === 2 && data.studios.length === 0) {
-        alert("Please select at least one studio.");
+        alert(t("errors.select_studio"));
         return;
       }
       if (step === 3 && data.slots.length === 0) {
-        alert("Please select at least one time slot.");
+        alert(t("errors.select_slot"));
         return;
       }
       setStep(step + 1);
@@ -525,8 +618,8 @@ export default function ReservationForm({ preselectedStudio, preselectedDate, on
       </div>
 
       <div style={{ minHeight: '400px' }}>
-        {step === 1 && <Step1 data={data} onChange={update} t={t} />}
-        {step === 2 && <Step2 data={data} onChange={update} studios={studios} t={t} />}
+        {step === 1 && <Step1 data={data} onChange={update} categories={categories} t={t} />}
+        {step === 2 && <Step2 data={data} onChange={update} studios={studios} loading={studiosLoading} t={t} />}
         {step === 3 && <Step3 data={data} onChange={update} t={t} />}
         {step === 4 && <Step4 data={data} onChange={update} totalPrice={totalPrice} totalHours={totalHours} t={t} />}
         

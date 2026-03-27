@@ -2,6 +2,7 @@ import { useState, useCallback, createContext, useContext, useEffect } from "rea
 import { Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { useTranslation } from "react-i18next";
 import "./styles/globals.css";
+import "./styles/Layout.css";
 
 import Navbar          from "./components/Navbar";
 import Footer          from "./components/Footer";
@@ -11,6 +12,7 @@ import AboutCompany    from "./components/AboutCompany";
 import OffersPage      from "./pages/OffersPage";
 import StudioPage      from "./pages/StudioPage";
 import AuthModal       from "./components/AuthModal";
+import Sidebar         from "./components/Sidebar";
 
 // Auth related imports
 import Login           from "./pages/Login";
@@ -22,12 +24,24 @@ import AdminDashboard  from "./pages/AdminDashboard";
 import AdminStudioForm from "./pages/AdminStudioForm";
 import AdminUserHistory from "./pages/AdminUserHistory";
 import { getUser }     from "./api/authApi";
+import { getFavorites, addFavorite, removeFavorite } from "./api/favoriteApi";
+import { getNotifications, markRead, markAllRead } from "./api/notificationApi";
 import ReservationDetailsPage from "./pages/ReservationDetailsPage";
 
 // ── Auth Context ──────────────────────────────────────────────
 const AuthContext = createContext(null);
 export { AuthContext };
 export const useAuth = () => useContext(AuthContext);
+
+// ── Favorites Context ─────────────────────────────────────────
+const FavoritesContext = createContext(null);
+export { FavoritesContext };
+export const useFavorites = () => useContext(FavoritesContext);
+
+// ── Notifications Context ─────────────────────────────────────
+const NotificationsContext = createContext(null);
+export { NotificationsContext };
+export const useNotifications = () => useContext(NotificationsContext);
 
 // ── Toast helper ──────────────────────────────────────────────
 function Toast({ message, onDone }) {
@@ -89,11 +103,117 @@ function AuthProvider({ children }) {
   );
 }
 
+function FavoritesProvider({ children }) {
+  const [favorites, setFavorites] = useState([]);
+  const { isAuthenticated } = useAuth();
+
+  const fetchFavorites = useCallback(async () => {
+    if (!isAuthenticated) {
+      setFavorites([]);
+      return;
+    }
+    try {
+      const response = await getFavorites();
+      setFavorites(response.data || []);
+    } catch (err) {
+      console.error("Failed to fetch favorites:", err);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    fetchFavorites();
+  }, [fetchFavorites]);
+
+  const toggleFavorite = async (studioId) => {
+    if (!isAuthenticated) return false;
+
+    const isFav = favorites.some(f => f.id === studioId);
+    try {
+      if (isFav) {
+        await removeFavorite(studioId);
+        setFavorites(prev => prev.filter(f => f.id !== studioId));
+      } else {
+        await addFavorite(studioId);
+        // Optimistically update or re-fetch. Let's re-fetch to get full studio data if needed, 
+        // or just update if we have the data. For now, re-fetch is safer.
+        fetchFavorites();
+      }
+      return true;
+    } catch (err) {
+      console.error("Failed to toggle favorite:", err);
+      return false;
+    }
+  };
+
+  const isFavorite = (studioId) => favorites.some(f => f.id === studioId);
+
+  return (
+    <FavoritesContext.Provider value={{ favorites, toggleFavorite, isFavorite, fetchFavorites }}>
+      {children}
+    </FavoritesContext.Provider>
+  );
+}
+
+function NotificationsProvider({ children }) {
+  const [notifications, setNotifications] = useState([]);
+  const { isAuthenticated } = useAuth();
+
+  const fetchNotifications = useCallback(async () => {
+    if (!isAuthenticated) {
+      setNotifications([]);
+      return;
+    }
+    try {
+      const response = await getNotifications();
+      setNotifications(response.data || []);
+    } catch (err) {
+      console.error("Failed to fetch notifications:", err);
+    }
+  }, [isAuthenticated]);
+
+  useEffect(() => {
+    fetchNotifications();
+    // Refresh every minute
+    const interval = setInterval(fetchNotifications, 60000);
+    return () => clearInterval(interval);
+  }, [fetchNotifications]);
+
+  const handleMarkRead = async (id) => {
+    try {
+      await markRead(id);
+      setNotifications(prev => prev.map(n => n.id === id ? { ...n, is_read: true } : n));
+    } catch (err) {
+      console.error("Failed to mark notification as read:", err);
+    }
+  };
+
+  const handleMarkAllRead = async () => {
+    try {
+      await markAllRead();
+      setNotifications(prev => prev.map(n => ({ ...n, is_read: true })));
+    } catch (err) {
+      console.error("Failed to mark all notifications as read:", err);
+    }
+  };
+
+  const unreadCount = notifications.filter(n => !n.is_read).length;
+
+  return (
+    <NotificationsContext.Provider value={{ notifications, unreadCount, markRead: handleMarkRead, markAllRead: handleMarkAllRead, fetchNotifications }}>
+      {children}
+    </NotificationsContext.Provider>
+  );
+}
+
 
 export default function App() {
   return (
     <AuthProvider>
-      <AppContent />
+      <FavoritesProvider>
+        <NotificationsProvider>
+          <AppContent />
+        </NotificationsProvider>
+      </FavoritesProvider>
     </AuthProvider>
   );
 }
@@ -104,6 +224,11 @@ function AppContent() {
   const [preStudio,      setPreStudio]      = useState(null);
   const [toast,          setToast]          = useState(null);
   
+  // Sidebar State
+  const [isSidebarExpanded, setIsSidebarExpanded] = useState(true);
+  const [selectedCategory, setSelectedCategory] = useState(null);
+  const [availability, setAvailability] = useState(null);
+
   // Auth Modal State
   const [showAuthModal, setShowAuthModal] = useState(false);
   const [authMode, setAuthMode] = useState('login');
@@ -135,39 +260,84 @@ function AppContent() {
   };
 
   useEffect(() => {
+    const handleResize = () => {
+      if (window.innerWidth <= 1024) {
+        setIsSidebarExpanded(false);
+      }
+    };
+    handleResize();
+    window.addEventListener('resize', handleResize);
+    return () => window.removeEventListener('resize', handleResize);
+  }, []);
+
+  useEffect(() => {
     if (location.state?.openReservation && !showReservation) {
       openBook(location.state.preselectedStudio ?? null);
       navigate(location.pathname, { replace: true, state: null });
     }
   }, [location, showReservation, navigate, openBook]);
 
+  const isHomePage = location.pathname === '/';
+
   return (
-    <>
-      <Navbar onBook={openBook} onAuth={handleAuth} />
+    <div className="app-container">
+      <div className="navbar-wrapper">
+        <Navbar onBook={openBook} onAuth={handleAuth} />
+      </div>
+      
+      <div className="app-layout">
+        {/* GLOBAL SIDEBAR */}
+        <Sidebar 
+          isExpanded={isSidebarExpanded}
+          onToggle={() => setIsSidebarExpanded(!isSidebarExpanded)}
+          selectedDate={selectedDate}
+          onSelectDate={setSelectedDate}
+          onAvailabilityLoad={setAvailability}
+          selectedCategory={selectedCategory}
+          onSelectCategory={setSelectedCategory}
+          showCards={isHomePage}
+        />
 
-      <Routes>
-        <Route path="/" element={<HomeLayout openBook={openBook} />} />
-        <Route path="/offers" element={<OffersPage />} />
-        <Route path="/about" element={<AboutCompany />} />
-        <Route path="/studio/:id" element={<StudioPage />} />
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        
-        <Route path="/dashboard/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
-        <Route path="/dashboard/reservations/:bookingReference" element={<ProtectedRoute><ReservationDetailsPage /></ProtectedRoute>} />
-        
-        {/* Admin Routes */}
-        <Route element={<AdminRoute />}>
-          <Route path="/admin/dashboard/*" element={<AdminDashboard />} />
-          <Route path="/admin/dashboard/studios/add" element={<AdminStudioForm />} />
-          <Route path="/admin/dashboard/studios/edit/:id" element={<AdminStudioForm />} />
-          <Route path="/admin/dashboard/users/:id/history" element={<AdminUserHistory />} />
-        </Route>
+        <div className="main-content-wrapper">
+          <div className="page-content">
+            <Routes>
+              <Route path="/" element={
+                <HomeLayout 
+                  openBook={openBook} 
+                  onAuth={handleAuth}
+                  selectedDate={selectedDate}
+                  setSelectedDate={setSelectedDate}
+                  selectedCategory={selectedCategory}
+                  setSelectedCategory={setSelectedCategory}
+                  availability={availability}
+                  setAvailability={setAvailability}
+                />
+              } />
+              <Route path="/offers" element={<OffersPage />} />
+              <Route path="/about" element={<AboutCompany />} />
+              <Route path="/studio/:id" element={<StudioPage />} />
+              <Route path="/login" element={<Login />} />
+              <Route path="/register" element={<Register />} />
+              
+              <Route path="/dashboard/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/dashboard/reservations/:bookingReference" element={<ProtectedRoute><ReservationDetailsPage /></ProtectedRoute>} />
+              
+              <Route element={<AdminRoute />}>
+                <Route path="/admin/dashboard/*" element={<AdminDashboard />} />
+                <Route path="/admin/dashboard/studios/add" element={<AdminStudioForm />} />
+                <Route path="/admin/dashboard/studios/edit/:id" element={<AdminStudioForm />} />
+                <Route path="/admin/dashboard/users/:id/history" element={<AdminUserHistory />} />
+              </Route>
 
-        <Route path="/reserve-studio" element={<ReservationTrigger openBook={openBook} navigate={navigate} />} />
-      </Routes>
+              <Route path="/reserve-studio" element={<ReservationTrigger openBook={openBook} navigate={navigate} />} />
+            </Routes>
+          </div>
+        </div>
+      </div>
 
-      <Footer />
+      <div className="footer-wrapper">
+        <Footer />
+      </div>
 
       {showReservation && (
         <ReservationForm
@@ -186,7 +356,7 @@ function AppContent() {
       )}
 
       {toast && <Toast message={toast} onDone={() => setToast(null)} />}
-    </>
+    </div>
   );
 }
 

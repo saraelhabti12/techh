@@ -3,250 +3,251 @@
 namespace Database\Seeders;
 
 use App\Models\Studio;
+use App\Models\Category;
 use Illuminate\Database\Seeder;
+use Illuminate\Support\Facades\DB;
 
 class StudioSeeder extends Seeder
 {
-    /**
-     * Run the database seeds.
-     */
     public function run(): void
     {
-        // Clear existing studios to avoid duplicates
-        \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=0;');
+        DB::statement('SET FOREIGN_KEY_CHECKS=0;');
         Studio::truncate();
-        \Illuminate\Support\Facades\DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+        Category::truncate();
+        DB::statement('SET FOREIGN_KEY_CHECKS=1;');
+
+        $categories = [
+            ['name' => 'Content', 'icon' => '📸', 'color' => '#a38bff'],
+            ['name' => 'Podcast', 'icon' => '🎙️', 'color' => '#6e8eff'],
+            ['name' => 'Shooting', 'icon' => '📹', 'color' => '#5e1da8'],
+            ['name' => 'Girly Space', 'icon' => '✨', 'color' => '#ff7096'],
+            ['name' => 'Birthday', 'icon' => '🎉', 'color' => '#f472b6'],
+        ];
+
+        $createdCategories = [];
+        foreach ($categories as $cat) {
+            $createdCategories[$cat['name']] = Category::create($cat);
+        }
 
         $studios = [
+            // CONTENT
             [
-                'name' => "Full Access Studio", 
-                'name_en' => "Full Access Studio", 
-                'name_fr' => "Studio Accès Complet",
-                'badge' => "Premium",
-                'badge_en' => "Premium",
-                'badge_fr' => "Haut de Gamme",
-                'tagline' => "The complete professional experience",
-                'tagline_en' => "The complete professional experience",
-                'tagline_fr' => "L'expérience professionnelle complète",
-                'description' => " Our Full Access Studio offers a complete professional environment designed for high-quality photo and video production. The space is fully equipped with advanced lighting systems, backdrops, and professional cameras to meet the needs of creators, photographers, and production teams.
-
-Ideal for:
-- Professional photoshoots
-- Video production
-- Commercial projects",
-                'description_en' => "Our Full Access Studio offers a complete professional environment designed for high-quality photo and video production. The space is fully equipped with advanced lighting systems, backdrops, and professional cameras to meet the needs of creators, photographers, and production teams.
-
-Ideal for:
-- Professional photoshoots
-- Video production
-- Commercial projects ",
-                'description_fr' =>  " Notre Full Access Studio offre un environnement professionnel complet, conçu pour la production photo et vidéo de haute qualité. Cet espace est entièrement équipé avec des systèmes d’éclairage avancés, des fonds variés et du matériel adapté aux besoins des créateurs, photographes et équipes de production.
-
-Idéal pour :
-- Séances photo professionnelles
-- Production vidéo
-- Projets commerciaux
-",
-                'features_en' => ["Profoto Pro-11 Lighting Rig", "ARRI Alexa Mini Setup", "Soundproofed Control Room", "White & Green Cyc Walls", "Wardrobe & Makeup Room", "Client Lounge"],
-                'features_fr' => ["Système d'éclairage Profoto Pro-11", "Kit ARRI Alexa Mini", "Régie insonorisée", "Cyclos Blanc et Vert", "Vestiaire et Maquillage", "Salon Client"],
-                'price_per_hour' => 2000, 
-                'color' => "#5e1da8",
-                'image' => "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=800&q=75",
-                'gallery' => [
-                    "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=800&q=75",
-                    "https://images.unsplash.com/photo-1581092160562-40aa08e12e2c?w=700&q=70",
-                ],
-                'price' => 1000,
-            ],
-            [
-                'name' => "White Screen Studio", 
-                'name_en' => "White Screen Studio", 
-                'name_fr' => "Studio Fond Blanc",
-                'badge' => "Popular",
-                'badge_en' => "Popular",
-                'badge_fr' => "Populaire",
-                'tagline' => "Infinity white for flawless shots",
-                'tagline_en' => "Infinity white for flawless shots",
-                'tagline_fr' => "Blanc infini pour des clichés impeccables",
-                'description' => "This studio is designed for presentations, tutorials, and digital content creation. It features a high-quality screen setup, perfect for displaying visuals, slides, or background content during filming.
-
-Ideal for:
-- Educational videos
-- Presentations
-- YouTube content ",
-                'description_en' => " This studio is designed for presentations, tutorials, and digital content creation. It features a high-quality screen setup, perfect for displaying visuals, slides, or background content during filming.
-
-Ideal for:
-- Educational videos
-- Presentations
-- YouTube content",
-                'description_fr' => "Ce studio est spécialement conçu pour les présentations, tutoriels et créations de contenu digital. Il dispose d’un écran de haute qualité, idéal pour afficher des visuels, des slides ou des arrière-plans pendant l’enregistrement.
-
-Idéal pour :
-- Vidéos éducatives
-- Présentations
-- Contenu YouTube ",
-                'features_en' => ["6x6m Seamless White Cyc", "Godox AD600 Pro Strobes ×4", "Heavy Duty C-Stands", "Capture One Tether Station", "Steamer & Garment Racks"],
-                'features_fr' => ["Cyclo Blanc 6x6m sans couture", "4 Flashs Godox AD600 Pro", "Pieds C-Stands robustes", "Station Capture One connectée", "Défroisseur et Portants"],
-                'price_per_hour' => 600, 
-                'color' => "#f472b6",
-                'image' => "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=75",
-                'gallery' => [
-                    "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=75",
-                    "https://images.unsplash.com/photo-1526816137703-14f7509b9dc6?w=700&q=70",
-                ],
-                'price' => 600,
-            ],
-            [
-                'name' => "Girly Space", 
-                'name_en' => "Girly Space", 
-                'name_fr' => "Espace Girly",
-                'badge' => "Trending",
-                'badge_en' => "Trending",
-                'badge_fr' => "Tendance",
-                'tagline' => "Instagrammable at every angle",
-                'tagline_en' => "Instagrammable at every angle",
-                'tagline_fr' => "Instagrammable sous tous les angles",
-                'description' => "Our Girly Space is a vibrant and aesthetic studio designed for girls, young creators, and small celebrations. The space combines soft colors, stylish decor, and a playful atmosphere, making it perfect for both content creation and special moments.
-
-Ideal for:
-- Beauty & lifestyle content
-- Social media photos & videos
-- Kids photoshoots
-- Birthday celebrations
-- Small private events ",
-                'description_en' => "Our Girly Space is a vibrant and aesthetic studio designed for girls, young creators, and small celebrations. The space combines soft colors, stylish decor, and a playful atmosphere, making it perfect for both content creation and special moments.
-
-Ideal for:
-- Beauty & lifestyle content
-- Social media photos & videos
-- Kids photoshoots
-- Birthday celebrations
-- Small private events ",
-                'description_fr' => "
-Notre Girly Space est un studio dynamique et esthétique, conçu spécialement pour les filles, les jeunes créateurs et les petites célébrations. L’espace combine des couleurs douces, une décoration élégante et une ambiance ludique, ce qui le rend idéal à la fois pour la création de contenu et pour des moments spéciaux.
-
-Idéal pour :
-- Contenu beauté et lifestyle
-- Photos et vidéos pour les réseaux sociaux
-- Shooting enfants
-- Fêtes d’anniversaire
-- Petits événements privés ",
-                'features_en' => ["Modular Pastel Walls", "LED Ring Lights ×4", "Lighted Vanity Mirror", "Neon Accent Signage", "Prop Furniture Nook"],
-                'features_fr' => ["Murs Pastel Modulaires", "4 Anneaux LED", "Miroir Maquillage Lumineux", "Enseignes Néon", "Coin Meubles et Accessoires"],
-                'price_per_hour' => 400, 
-                'color' => "#ff7096",
-                'image' => "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=800&q=75",
-                'gallery' => [
-                    "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=800&q=75",
-                    "https://images.unsplash.com/photo-1487412720507-e7ab37603c6f?w=700&q=70",
-                ],
-                'price' => 400,
-            ],
-            [
-                'name' => "Podcast Space", 
-                'name_en' => "Podcast Space", 
-                'name_fr' => "Espace Podcast",
-                'badge' => "Creator",
-                'badge_en' => "Creator",
-                'badge_fr' => "Créateur",
-                'tagline' => "Broadcast-grade audio & video",
-                'tagline_en' => "Broadcast-grade audio & video",
-                'tagline_fr' => "Audio et Vidéo de qualité diffusion",
-                'description' => " 
-A sound-optimized studio tailored for podcast recording and audio production. Equipped with professional microphones and audio systems to ensure clear and high-quality sound.
-
-Ideal for:
-- Podcast recording
-- Interviews
-- Voice content ",
-                'description_en' => "
-A sound-optimized studio tailored for podcast recording and audio production. Equipped with professional microphones and audio systems to ensure clear and high-quality sound.
-
-                Ideal for:
-               - Podcast recording
-               - Interviews
-               - Voice content",
-                'description_fr' => " Un studio optimisé pour l’enregistrement audio et les podcasts. Il est équipé de matériel professionnel pour garantir une qualité sonore claire et nette.
-
-Idéal pour :
-- Enregistrement de podcasts
-- Interviews
-- Contenu audio",
-                'features_en' => ["Acoustic Treatment", "4-Seat Custom Desk", "Shure SM7B Mics ×4", "RØDECaster Pro II", "Sony 4K PTZ Cameras ×3"],
-                'features_fr' => ["Traitement Acoustique", "Bureau 4 places sur mesure", "4 Micros Shure SM7B", "RØDECaster Pro II", "3 Caméras PTZ Sony 4K"],
-                'price_per_hour' => 450, 
-                'color' => "#6e8eff",
-                'image' => "https://images.unsplash.com/photo-1589903308904-1010c2294adc?w=800&q=75",
-                'gallery' => [
-                    "https://images.unsplash.com/photo-1589903308904-1010c2294adc?w=800&q=75",
-                    "https://images.unsplash.com/photo-1478737270197-c47e2e2d7f5d?w=700&q=70",
-                ],
-                'price' => 450,
-            ],
-            [
+                'category_id' => $createdCategories['Content']->id,
                 'name' => "Content Space", 
                 'name_en' => "Content Space", 
                 'name_fr' => "Espace Contenu",
                 'badge' => "Versatile",
-                'badge_en' => "Versatile",
-                'badge_fr' => "Polyvalent",
                 'tagline' => "One booking, five setups",
-                'tagline_en' => "One booking, five setups",
-                'tagline_fr' => "Une réservation, cinq décors",
-                'description' => " A flexible and modern space designed for content creators who need a versatile setup. Whether you're filming short videos, reels, or social media content, this studio adapts to your needs.
-
-Ideal for:
-- TikTok / Reels
-- Vlogging
-- Creative content
-",
-                'description_en' => "A flexible and modern space designed for content creators who need a versatile setup. Whether you're filming short videos, reels, or social media content, this studio adapts to your needs.
-
-Ideal for:
-- TikTok / Reels
-- Vlogging
-- Creative content
- ",
-                'description_fr' => " Un espace moderne et flexible, conçu pour les créateurs de contenu qui ont besoin d’un setup adaptable. Parfait pour filmer des vidéos courtes, reels ou contenu pour réseaux sociaux.
-
-Idéal pour :
-- TikTok / Reels
-- Vlogs
-- Contenu créatif",
-                'features_en' => ["5 Pre-Dressed Corners", "Aputure LED Panels", "iPad Teleprompter", "Motorized Gimbals", "High-Speed Editing PC"],
-                'features_fr' => ["5 Coins pré-décorés", "Panneaux LED Aputure", "Téléprompteur iPad", "Gimbals Motorisés", "PC de montage haute performance"],
+                'description' => "A flexible and modern space designed for content creators who need a versatile setup.",
+                'features_en' => ["5 Pre-Dressed Corners", "Aputure LED Panels", "iPad Teleprompter"],
+                'features_fr' => ["5 Coins pré-décorés", "Panneaux LED Aputure", "Téléprompteur iPad"],
                 'price_per_hour' => 500, 
                 'color' => "#a38bff",
                 'image' => "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=800&q=75",
-                'gallery' => [
-                    "https://images.unsplash.com/photo-1540569014015-19a7be504e3a?w=800&q=75",
-                    "https://images.unsplash.com/photo-1611532736597-de2d4265fba3?w=700&q=70",
-                ],
                 'price' => 500,
             ],
             [
-                'name' => "Photography Room", 
-                'name_en' => "Photography Room", 
-                'name_fr' => "Salle Photographie",
-                'badge' => "New",
-                'badge_en' => "New",
-                'badge_fr' => "Nouveau",
-                'tagline' => "Perfect lighting, perfect shots",
-                'tagline_en' => "Perfect lighting, perfect shots",
-                'tagline_fr' => "Éclairage parfait, clichés parfaits",
-                'description' => "An intimate 35m² space dedicated entirely to portrait and still-life photography. Outfitted with ceiling-mounted rails to keep the floor clear, 10+ seamless paper color choices, and a range of large softboxes and umbrellas.",
-                'description_en' => "An intimate 35m² space dedicated entirely to portrait and still-life photography. Outfitted with ceiling-mounted rails to keep the floor clear, 10+ seamless paper color choices, and a range of large softboxes and umbrellas.",
-                'description_fr' => "Un espace intimiste de 35m² dédié à la photographie de portrait et de nature morte. Équipé de rails au plafond pour libérer le sol, 10+ choix de couleurs de papier et une gamme de softboxes.",
-                'features_en' => ["Ceiling Mounted Rails", "10+ Paper Backdrops", "Bowens Mount Modifiers", "Tethering Cart", "V-Flats"],
-                'features_fr' => ["Rails montés au plafond", "10+ fonds en papier", "Modificateurs monture Bowens", "Chariot de prise de vue connectée", "V-Flats"],
-                'price_per_hour' => 400, 
-                'color' => "#22c07a",
+                'category_id' => $createdCategories['Content']->id,
+                'name' => "Video Production Studio", 
+                'name_en' => "Video Production Studio", 
+                'name_fr' => "Studio de Production Vidéo",
+                'badge' => "Professional",
+                'tagline' => "High-end video gear included",
+                'description' => "Fully equipped for professional video production and editing.",
+                'features_en' => ["4K Cameras", "Pro Lighting", "Soundproofing"],
+                'features_fr' => ["Caméras 4K", "Éclairage Pro", "Insonorisation"],
+                'price_per_hour' => 800, 
+                'color' => "#a38bff",
+                'image' => "https://images.unsplash.com/photo-1574717024653-61fd2cf4d44d?w=800&q=75",
+                'price' => 800,
+            ],
+            [
+                'category_id' => $createdCategories['Content']->id,
+                'name' => "Streaming Setup Studio", 
+                'name_en' => "Streaming Setup Studio", 
+                'name_fr' => "Studio de Streaming",
+                'badge' => "Live",
+                'tagline' => "Go live with zero lag",
+                'description' => "Perfect for streamers who want a professional look for their broadcasts.",
+                'features_en' => ["Fiber Internet", "GoXLR", "Dual PC Setup"],
+                'features_fr' => ["Internet Fibre", "GoXLR", "Setup Double PC"],
+                'price_per_hour' => 450, 
+                'color' => "#a38bff",
+                'image' => "https://images.unsplash.com/photo-1598550874175-4d0fe40ff08a?w=800&q=75",
+                'price' => 450,
+            ],
+
+            // PODCAST
+            [
+                'category_id' => $createdCategories['Podcast']->id,
+                'name' => "Podcast Space", 
+                'name_en' => "Podcast Space", 
+                'name_fr' => "Espace Podcast",
+                'badge' => "Creator",
+                'tagline' => "Broadcast-grade audio & video",
+                'description' => "A sound-optimized studio tailored for podcast recording and audio production.",
+                'features_en' => ["Acoustic Treatment", "Shure SM7B Mics", "RØDECaster Pro II"],
+                'features_fr' => ["Traitement Acoustique", "Micros Shure SM7B", "RØDECaster Pro II"],
+                'price_per_hour' => 450, 
+                'color' => "#6e8eff",
+                'image' => "https://images.unsplash.com/photo-1589903308904-1010c2294adc?w=800&q=75",
+                'price' => 450,
+            ],
+            [
+                'category_id' => $createdCategories['Podcast']->id,
+                'name' => "Solo Podcast Room", 
+                'name_en' => "Solo Podcast Room", 
+                'name_fr' => "Salle Podcast Solo",
+                'badge' => "Cozy",
+                'tagline' => "Perfect for single host recordings",
+                'description' => "Intimate space designed for high-quality solo vocal performance.",
+                'features_en' => ["Vocal Booth", "Preamp", "Monitoring"],
+                'features_fr' => ["Cabine Vocale", "Préampli", "Monitoring"],
+                'price_per_hour' => 300, 
+                'color' => "#6e8eff",
+                'image' => "https://images.unsplash.com/photo-1590602847861-f357a9332bbc?w=800&q=75",
+                'price' => 300,
+            ],
+            [
+                'category_id' => $createdCategories['Podcast']->id,
+                'name' => "Interview Setup Studio", 
+                'name_en' => "Interview Setup Studio", 
+                'name_fr' => "Studio d'Interview",
+                'badge' => "Pro Audio",
+                'tagline' => "Professional talk-show environment",
+                'description' => "Spacious room designed for multi-person interviews and talk shows.",
+                'features_en' => ["4 Mics", "Video Recording", "Comfortable Seating"],
+                'features_fr' => ["4 Micros", "Enregistrement Vidéo", "Sièges Confortables"],
+                'price_per_hour' => 600, 
+                'color' => "#6e8eff",
+                'image' => "https://images.unsplash.com/photo-1478737270197-c47e2e2d7f5d?w=800&q=75",
+                'price' => 600,
+            ],
+
+            // SHOOTING
+            [
+                'category_id' => $createdCategories['Shooting']->id,
+                'name' => "Full Access Studio", 
+                'name_en' => "Full Access Studio", 
+                'name_fr' => "Studio Accès Complet",
+                'badge' => "Premium",
+                'tagline' => "The complete professional experience",
+                'description' => "Our Full Access Studio offers a complete professional environment designed for high-quality photo and video production.",
+                'features_en' => ["Profoto Lighting", "ARRI Alexa Mini Setup", "White & Green Cyc Walls"],
+                'features_fr' => ["Éclairage Profoto", "Kit ARRI Alexa Mini", "Cyclos Blanc et Vert"],
+                'price_per_hour' => 2000, 
+                'color' => "#5e1da8",
+                'image' => "https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=800&q=75",
+                'price' => 1000,
+            ],
+            [
+                'category_id' => $createdCategories['Shooting']->id,
+                'name' => "White Screen Studio", 
+                'name_en' => "White Screen Studio", 
+                'name_fr' => "Studio Fond Blanc",
+                'badge' => "Popular",
+                'tagline' => "Infinity white for flawless shots",
+                'description' => "This studio is designed for presentations, tutorials, and digital content creation.",
+                'features_en' => ["6x6m Seamless White Cyc", "Godox AD600 Pro Strobes", "Capture One Station"],
+                'features_fr' => ["Cyclo Blanc 6x6m sans couture", "Flashs Godox AD600 Pro", "Station Capture One"],
+                'price_per_hour' => 600, 
+                'color' => "#5e1da8",
+                'image' => "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=75",
+                'price' => 600,
+            ],
+            [
+                'category_id' => $createdCategories['Shooting']->id,
+                'name' => "Product Photography Studio", 
+                'name_en' => "Product Photography Studio", 
+                'name_fr' => "Studio Photo Produit",
+                'badge' => "Detail",
+                'tagline' => "Macro-ready environment",
+                'description' => "Dedicated to high-end product and commercial photography.",
+                'features_en' => ["Macro Lenses", "Product Tables", "Custom Backgrounds"],
+                'features_fr' => ["Objectifs Macro", "Tables de Produit", "Fonds Personnalisés"],
+                'price_per_hour' => 500, 
+                'color' => "#5e1da8",
                 'image' => "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&q=75",
-                'gallery' => [
-                    "https://images.unsplash.com/photo-1516035069371-29a1b244cc32?w=800&q=75",
-                ],
+                'price' => 500,
+            ],
+
+            // GIRLY SPACE
+            [
+                'category_id' => $createdCategories['Girly Space']->id,
+                'name' => "Girly Space", 
+                'name_en' => "Girly Space", 
+                'name_fr' => "Espace Girly",
+                'badge' => "Trending",
+                'tagline' => "Instagrammable at every angle",
+                'description' => "Our Girly Space is a vibrant and aesthetic studio designed for girls, young creators, and small celebrations.",
+                'features_en' => ["Modular Pastel Walls", "LED Ring Lights", "Lighted Vanity Mirror"],
+                'features_fr' => ["Murs Pastel Modulaires", "Anneaux LED", "Miroir Maquillage Lumineux"],
+                'price_per_hour' => 400, 
+                'color' => "#ff7096",
+                'image' => "https://images.unsplash.com/photo-1522335789203-aabd1fc54bc9?w=800&q=75",
                 'price' => 400,
+            ],
+            [
+                'category_id' => $createdCategories['Girly Space']->id,
+                'name' => "Beauty Studio", 
+                'name_en' => "Beauty Studio", 
+                'name_fr' => "Studio de Beauté",
+                'badge' => "Glow",
+                'tagline' => "Where glam meets professional production",
+                'description' => "Designed for makeup tutorials, beauty reviews, and glamorous photoshoots.",
+                'features_en' => ["Professional Vanity", "Ring Lights", "Glam Decor"],
+                'features_fr' => ["Coiffeuse Professionnelle", "Anneaux Lumineux", "Déco Glam"],
+                'price_per_hour' => 450, 
+                'color' => "#ff7096",
+                'image' => "https://images.unsplash.com/photo-1596462502278-27bfad450216?w=800&q=75",
+                'price' => 450,
+            ],
+            [
+                'category_id' => $createdCategories['Girly Space']->id,
+                'name' => "Influencer Room", 
+                'name_en' => "Influencer Room", 
+                'name_fr' => "Chambre Influenceuse",
+                'badge' => "Social",
+                'tagline' => "Ready-to-use lifestyle sets",
+                'description' => "Perfect for lifestyle bloggers and influencers who need a stylish home-like setting.",
+                'features_en' => ["Boho Decor", "Natural Light", "Multiple Backdrops"],
+                'features_fr' => ["Déco Boho", "Lumière Naturelle", "Plusieurs Fonds"],
+                'price_per_hour' => 350, 
+                'color' => "#ff7096",
+                'image' => "https://images.unsplash.com/photo-1614850523296-d8c1af93d400?w=800&q=75",
+                'price' => 350,
+            ],
+
+            // BIRTHDAY
+            [
+                'category_id' => $createdCategories['Birthday']->id,
+                'name' => "Birthday Room", 
+                'name_en' => "Event Room", 
+                'name_fr' => "Salle d'Événement",
+                'badge' => "Party",
+                'tagline' => "Celebrate your special day",
+                'description' => "Large open space perfect for birthday parties and small events.",
+                'features_en' => ["Sound System", "Tables & Chairs", "Mood Lighting"],
+                'features_fr' => ["Système Sonore", "Tables et Chaises", "Éclairage d'Ambiance"],
+                'price_per_hour' => 1000, 
+                'color' => "#f472b6",
+                'image' => "https://images.unsplash.com/photo-1530103043960-ef38714abb15?w=800&q=75",
+                'price' => 1000,
+            ],
+            [
+                'category_id' => $createdCategories['Birthday']->id,
+                'name' => "Party Studio", 
+                'name_en' => "Party Studio", 
+                'name_fr' => "Studio de Fête",
+                'badge' => "Fun",
+                'tagline' => "Everything you need for a great party",
+                'description' => "Fully equipped party room with decorations and entertainment systems.",
+                'features_en' => ["Karaoke", "Disco Ball", "Photo Booth"],
+                'features_fr' => ["Karaoké", "Boule à Facettes", "Photo Booth"],
+                'price_per_hour' => 1200, 
+                'color' => "#f472b6",
+                'image' => "https://images.unsplash.com/photo-1492684223066-81342ee5ff30?w=800&q=75",
+                'price' => 1200,
             ],
         ];
 

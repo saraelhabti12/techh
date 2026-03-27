@@ -1,0 +1,165 @@
+/* SIDEBAR CSS */
+.home-sidebar {
+  width: var(--sidebar-w);
+  flex-shrink: 0;
+  background: var(--white);
+  border-right: 1px solid var(--gray-200);
+  
+  /* STICKY FIX */
+  position: sticky;
+  top: 90px; /* offset from top (navbar height approx) */
+  align-self: flex-start; /* Required for sticky inside flex */
+  
+  /* Do not force height if we want natural page scroll sticky */
+  /* height: calc(100vh - var(--navbar-h)); */
+  
+  z-index: 900;
+  display: flex;
+  flex-direction: column;
+  transition: width 0.3s cubic-bezier(0.16, 1, 0.3, 1);
+}
+
+.sidebar-inner {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  gap: 24px; /* VERTICAL SPACING BETWEEN SECTIONS */
+}
+
+.home-sidebar.collapsed {
+  width: var(--sidebar-collapsed-w);
+}
+
+.home-sidebar.collapsed .sidebar-inner {
+  padding: 20px 10px;
+  gap: 20px;
+}
+
+.sidebar-toggle {
+  position: absolute;
+  right: -14px;
+  top: 24px;
+  width: 28px;
+  height: 28px;
+  background: var(--pink-500);
+  color: white;
+  border: none;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  font-size: 0.8rem;
+  box-shadow: var(--shadow-lg);
+  z-index: 1000;
+  transition: all 0.3s var(--ease);
+  border: 2px solid var(--white);
+}
+
+.sidebar-toggle:hover {
+  transform: scale(1.15);
+  background: var(--pink-600);
+}
+
+.sidebar-scroll-content {
+  display: flex;
+  flex-direction: column;
+  gap: 24px; /* INTERNAL SPACING BETWEEN ELEMENTS */
+}
+
+.sidebar-section {
+  display: flex;
+  flex-direction: column;
+  gap: 16px; /* Space between title and its content */
+}
+
+.section-header-icon {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+  color: var(--gray-900);
+  font-size: 1.2rem;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  text-align: left;
+  background: var(--gray-50);
+  border-radius: 12px;
+  border: 1px solid var(--gray-100);
+  width: 100%;
+}
+
+.section-header-icon:hover {
+  background: var(--pink-50);
+  border-color: var(--pink-100);
+  color: var(--pink-500);
+}
+
+.home-sidebar.collapsed .section-header-icon {
+  justify-content: center;
+  padding: 12px 0;
+  width: 50px;
+  margin: 0 auto;
+}
+
+.section-title {
+  font-size: 14px;
+  font-weight: 700;
+  white-space: nowrap;
+  animation: fadeIn 0.3s ease;
+  color: var(--gray-900);
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.calendar-wrapper-sidebar {
+  width: 100%;
+  animation: fadeIn 0.3s ease;
+  padding: 0;
+}
+
+.sidebar-hint {
+  margin-top: 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  background: var(--gray-50);
+  padding: 12px;
+  border-radius: 10px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--gray-600);
+}
+
+.dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  display: inline-block;
+}
+
+.dot-available { background: var(--available); }
+.dot-reserved { background: var(--reserved); }
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateX(-10px); }
+  to { opacity: 1; transform: translateX(0); }
+}
+
+/* RESPONSIVE MOBILE DRAWER */
+@media (max-width: 1024px) {
+  .home-sidebar {
+    position: fixed;
+    left: -320px;
+    top: 0;
+    bottom: 0;
+    width: 320px !important;
+    height: 100vh;
+    z-index: 2000;
+  }
+  
+  .home-sidebar.expanded {
+    transform: translateX(320px);
+  }
+}

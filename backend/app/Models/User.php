@@ -56,4 +56,19 @@ class User extends Authenticatable
     {
         return $this->hasMany(Reservation::class);
     }
+
+    public function favorites()
+    {
+        return $this->hasMany(Favorite::class);
+    }
+
+    public function favoriteStudios()
+    {
+        return $this->belongsToMany(Studio::class, 'favorites', 'user_id', 'studio_id')->withTimestamps();
+    }
+
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class);
+    }
 }

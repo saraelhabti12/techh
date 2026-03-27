@@ -103,9 +103,19 @@ class ReservationController extends Controller
                 ->get();
 
             if ($createdReservations->isNotEmpty()) {
-                $adminEmails = \App\Models\User::where('is_admin', true)->pluck('email');
+                $adminUsers = \App\Models\User::where('is_admin', true)->get();
+                $adminEmails = $adminUsers->pluck('email');
                 if ($adminEmails->isNotEmpty()) {
                     Mail::to($adminEmails)->send(new NewReservationMail($createdReservations));
+                }
+
+                // Create notifications for admins
+                foreach ($adminUsers as $admin) {
+                    \App\Models\Notification::create([
+                        'user_id' => $admin->id,
+                        'type' => 'new_reservation',
+                        'message' => "New reservation from {$validated['name']} (Ref: {$bookingReference})",
+                    ]);
                 }
             }
 

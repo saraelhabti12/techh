@@ -3,6 +3,7 @@
 namespace App\Http\Controllers;
 
 use App\Models\Studio;
+use App\Models\Category;
 use App\Models\Reservation;
 use App\Models\ReservationSlot;
 use Illuminate\Http\Request;
@@ -32,13 +33,19 @@ class StudioController extends Controller
     public function index(Request $request)
     {
         $locale = $this->getLocale($request);
-        $studios = Studio::all()->map(fn($s) => $this->localizeStudio($s, $locale));
+        $query = Studio::with('category');
+
+        if ($request->has('category_id')) {
+            $query->where('category_id', $request->category_id);
+        }
+
+        $studios = $query->get()->map(fn($s) => $this->localizeStudio($s, $locale));
         return response()->json(['data' => $studios]);
     }
 
     public function show(Request $request, $id)
     {
-        $studio = Studio::findOrFail($id);
+        $studio = Studio::with('category')->findOrFail($id);
         $locale = $this->getLocale($request);
         $studio = $this->localizeStudio($studio, $locale);
         return response()->json(['data' => $studio]);

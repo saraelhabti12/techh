@@ -41,13 +41,25 @@ class AdminReservationController extends Controller
         return response()->json($query->orderBy('created_at', 'desc')->paginate(15));
     }
 
-    public function updateStatus(Request $request, Reservation $reservation)
+    public function updateStatus(Request $request, $id)
     {
+        $reservation = Reservation::findOrFail($id);
         $validated = $request->validate([
             'status' => 'required|in:pending,confirmed,cancelled,completed',
         ]);
 
+        $oldStatus = $reservation->status;
         $reservation->update(['status' => $validated['status']]);
+
+        // Notify user if status changed
+        if ($oldStatus !== $validated['status'] && $reservation->user_id) {
+            $message = "Your reservation (Ref: {$reservation->booking_reference}) has been " . $validated['status'] . ".";
+            \App\Models\Notification::create([
+                'user_id' => $reservation->user_id,
+                'type' => 'reservation_status',
+                'message' => $message,
+            ]);
+        }
 
         return response()->json(['message' => "Reservation status updated to {$validated['status']}.", 'data' => $reservation->load(['studio', 'user', 'slots.studio'])]);
     }

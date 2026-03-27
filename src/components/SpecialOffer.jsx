@@ -1,5 +1,6 @@
 import { useState, useEffect } from "react";
 import { getOffers, OFFERS } from "../api/studioApi";
+import Modal from "./Modal";
 
 /**
  * SpecialOffer
@@ -160,27 +161,23 @@ export default function SpecialOffer({ onBook }) {
       </div>
 
       {/* Special Details Modal */}
-      {showDetailsId && (
-        <div
-          className="modal-overlay animate-fadeIn"
-          onClick={e => e.target === e.currentTarget && setShowDetailsId(null)}
-          style={{ zIndex: 1000 }}
-        >
-          <div className="modal-panel animate-scaleIn" style={{ padding: "2rem", maxWidth: "500px", margin: "auto" }}>
-            <h3 style={{ fontFamily: "'Cormorant Garamond', serif", fontSize: "1.5rem", marginBottom: "1rem", color: "#1A1A1A" }}>
-              Special Client Offer Details
-            </h3>
-            <p style={{ fontSize: "0.9rem", color: "#1A1A1A", lineHeight: 1.6, marginBottom: "1.5rem" }}>
-              As a valued special client, this offer includes priority booking, dedicated support, and additional complimentary setup time. Present your special client ID upon arrival to unlock these exclusive benefits.
-            </p>
-            <div style={{ display: "flex", justifyContent: "flex-end" }}>
-              <button className="btn btn-primary btn-md" onClick={() => setShowDetailsId(null)}>
-                Close
-              </button>
-            </div>
+      <Modal 
+        isOpen={!!showDetailsId} 
+        onClose={() => setShowDetailsId(null)}
+        title="Special Client Offer Details"
+        maxWidth="500px"
+      >
+        <div className="animate-fadeIn">
+          <p style={{ fontSize: "0.9rem", color: "#1A1A1A", lineHeight: 1.6, marginBottom: "1.5rem" }}>
+            As a valued special client, this offer includes priority booking, dedicated support, and additional complimentary setup time. Present your special client ID upon arrival to unlock these exclusive benefits.
+          </p>
+          <div style={{ display: "flex", justifyContent: "flex-end" }}>
+            <button className="btn btn-primary btn-md" onClick={() => setShowDetailsId(null)}>
+              Close
+            </button>
           </div>
         </div>
-      )}
+      </Modal>
     </section>
   );
 }

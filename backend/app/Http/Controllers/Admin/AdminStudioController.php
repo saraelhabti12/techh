@@ -26,6 +26,7 @@ class AdminStudioController extends Controller
     public function store(Request $request)
     {
         $validated = $request->validate([
+            'category_id' => 'nullable|exists:categories,id',
             'name' => 'required|string|max:255',
             'name_en' => 'nullable|string|max:255',
             'name_fr' => 'nullable|string|max:255',
@@ -59,6 +60,7 @@ class AdminStudioController extends Controller
     public function update(Request $request, Studio $studio)
     {
         $validated = $request->validate([
+            'category_id' => 'nullable|exists:categories,id',
             'name' => 'sometimes|string|max:255',
             'name_en' => 'nullable|string|max:255',
             'name_fr' => 'nullable|string|max:255',

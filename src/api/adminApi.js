@@ -42,6 +42,12 @@ export const createAdminStudio = (data) => req("/admin/studios", { method: "POST
 export const updateAdminStudio = (id, data) => req(`/admin/studios/${id}`, { method: "PUT", body: JSON.stringify(data) });
 export const deleteAdminStudio = (id) => req(`/admin/studios/${id}`, { method: "DELETE" });
 
+// ── Categories ─────────────────────────────────────────────────
+export const getAdminCategories = () => req("/admin/categories");
+export const createAdminCategory = (data) => req("/admin/categories", { method: "POST", body: JSON.stringify(data) });
+export const updateAdminCategory = (id, data) => req(`/admin/categories/${id}`, { method: "PUT", body: JSON.stringify(data) });
+export const deleteAdminCategory = (id) => req(`/admin/categories/${id}`, { method: "DELETE" });
+
 // ── Reservations ───────────────────────────────────────────────
 export const getAdminReservations = (params = {}) => {
   const q = new URLSearchParams(params).toString();

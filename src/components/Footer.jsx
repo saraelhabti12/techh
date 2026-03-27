@@ -11,7 +11,7 @@ export default function Footer() {
      
     {
       title: "Contact",
-      links: ["📍 Tangier, Morocco", "📞 +212 6XX-XXXXXX", "✉ techstudio@gmail.com", "🕐 Daily 8am – 24pm"],
+      links: ["📍 Tangier, Morocco", "📞 +212 660-606903", "✉ techstudio@gmail.com", "🕐 Daily 8am – 24pm"],
     },
   ];
 

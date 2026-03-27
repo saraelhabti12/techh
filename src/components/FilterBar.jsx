@@ -31,7 +31,7 @@ export default function FilterBar({ filters, setFilters }) {
             name="search"
             value={filters.search}
             onChange={handleChange}
-            placeholder={t('search_studios_placeholder') || "Search by name..."}
+            placeholder={t('search_studios_placeholder') || "Search..."}
             className="filter-input"
           />
         </div>
@@ -45,7 +45,7 @@ export default function FilterBar({ filters, setFilters }) {
           onChange={handleChange}
           className="filter-select"
         >
-          <option value="">{t('all_categories') || "All Categories"}</option>
+          <option value="">{t('all_categories') || "All"}</option>
           {categories.map(cat => (
             <option key={cat.id} value={cat.id}>{t(cat.title)}</option>
           ))}
@@ -53,7 +53,7 @@ export default function FilterBar({ filters, setFilters }) {
       </div>
 
       <div className="filter-group">
-        <label className="filter-label">{t('price_range')} (MAD)</label>
+        <label className="filter-label">{t('price_range')}</label>
         <div className="price-inputs">
           <input
             type="number"
@@ -63,7 +63,6 @@ export default function FilterBar({ filters, setFilters }) {
             placeholder="Min"
             className="filter-input price-input"
           />
-          <span className="price-separator">-</span>
           <input
             type="number"
             name="maxPrice"
@@ -84,7 +83,7 @@ export default function FilterBar({ filters, setFilters }) {
             onChange={handleChange}
           />
           <span className="toggle-slider"></span>
-          <span className="toggle-label">{t('available_only') || "Available only"}</span>
+          <span className="toggle-label">{t('available_only') || "Available"}</span>
         </label>
       </div>
 
@@ -92,22 +91,21 @@ export default function FilterBar({ filters, setFilters }) {
         .filter-bar {
           background: var(--white);
           border: 1px solid var(--gray-200);
-          border-radius: var(--r-xl);
-          padding: 1.5rem 2rem;
+          border-radius: 16px;
+          padding: 1rem 1.5rem;
           display: flex;
-          flex-wrap: wrap;
           align-items: flex-end;
-          gap: 1.5rem;
-          box-shadow: var(--shadow-md);
-          margin: 0 auto;
+          gap: 1rem;
+          box-shadow: var(--shadow-sm);
+          width: 100%;
+          margin-bottom: 2rem;
         }
 
         .filter-group {
           display: flex;
           flex-direction: column;
-          gap: 0.5rem;
+          gap: 0.4rem;
           flex: 1;
-          min-width: 150px;
         }
 
         .search-group {
@@ -115,11 +113,11 @@ export default function FilterBar({ filters, setFilters }) {
         }
 
         .filter-label {
-          font-size: 0.7rem;
+          font-size: 0.75rem;
           font-weight: 800;
           color: var(--gray-400);
           text-transform: uppercase;
-          letter-spacing: 0.1em;
+          letter-spacing: 0.05em;
         }
 
         .input-wrapper {
@@ -128,61 +126,55 @@ export default function FilterBar({ filters, setFilters }) {
 
         .input-icon {
           position: absolute;
-          left: 1.25rem;
+          left: 1rem;
           top: 50%;
           transform: translateY(-50%);
-          font-size: 0.9rem;
+          font-size: 0.85rem;
           color: var(--gray-400);
         }
 
         .filter-input, .filter-select {
+          height: 42px;
           width: 100%;
-          padding: 0.85rem 1.25rem;
+          padding: 0 1rem;
           background: var(--gray-50);
-          border: 1.5px solid var(--gray-100);
-          border-radius: 14px;
-          font-size: 0.95rem;
+          border: 1px solid var(--gray-200);
+          border-radius: 10px;
+          font-size: 0.9rem;
           color: var(--gray-900);
           font-weight: 500;
-          transition: all 0.3s var(--ease);
+          transition: all 0.2s var(--ease);
         }
 
         .filter-input:focus, .filter-select:focus {
           background: var(--white);
           border-color: var(--pink-400);
-          box-shadow: 0 0 0 4px rgba(255, 15, 155, 0.08);
+          box-shadow: 0 0 0 3px rgba(255, 15, 155, 0.05);
         }
 
         .input-wrapper .filter-input {
-          padding-left: 2.8rem;
+          padding-left: 2.4rem;
         }
 
         .price-inputs {
           display: flex;
-          align-items: center;
           gap: 0.5rem;
         }
 
         .price-input {
-          padding: 0.85rem 0.5rem;
+          padding: 0 0.5rem;
           text-align: center;
-        }
-
-        .price-separator {
-          color: var(--gray-300);
-          font-weight: 600;
         }
 
         .toggle-group {
           flex: 0 0 auto;
-          min-width: auto;
-          padding-bottom: 0.5rem;
+          margin-bottom: 0.5rem;
         }
 
         .filter-toggle {
           display: flex;
           align-items: center;
-          gap: 0.75rem;
+          gap: 0.6rem;
           cursor: pointer;
         }
 
@@ -191,10 +183,10 @@ export default function FilterBar({ filters, setFilters }) {
         }
 
         .toggle-slider {
-          width: 44px;
-          height: 24px;
+          width: 38px;
+          height: 20px;
           background: var(--gray-200);
-          border-radius: 20px;
+          border-radius: 10px;
           position: relative;
           transition: 0.3s;
         }
@@ -202,8 +194,8 @@ export default function FilterBar({ filters, setFilters }) {
         .toggle-slider::before {
           content: '';
           position: absolute;
-          width: 18px;
-          height: 18px;
+          width: 14px;
+          height: 14px;
           background: #fff;
           border-radius: 50%;
           top: 3px;
@@ -216,25 +208,30 @@ export default function FilterBar({ filters, setFilters }) {
         }
 
         .filter-toggle input:checked + .toggle-slider::before {
-          transform: translateX(20px);
+          transform: translateX(18px);
         }
 
         .toggle-label {
-          font-size: 0.95rem;
+          font-size: 0.85rem;
           font-weight: 700;
           color: var(--gray-700);
+          white-space: nowrap;
         }
 
-        @media (max-width: 900px) {
+        @media (max-width: 1024px) {
           .filter-bar {
-            padding: 1.25rem;
-            gap: 1rem;
+            flex-wrap: wrap;
           }
           .filter-group {
-            min-width: calc(50% - 1rem);
+            min-width: calc(50% - 0.5rem);
           }
           .search-group {
             min-width: 100%;
+          }
+          .toggle-group {
+            min-width: 100%;
+            margin-bottom: 0;
+            margin-top: 0.5rem;
           }
         }
       `}</style>

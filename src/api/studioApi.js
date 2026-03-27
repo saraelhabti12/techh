@@ -49,9 +49,13 @@ async function req(path, opts = {}) {
 // ── Studios ──────────────────────────────────────────────────
 /**
  * GET /api/studios
+ * @param {number|string} categoryId - Optional category ID to filter studios
  * @returns { data: Studio[] }
  */
-export const getStudios = async () => req("/studios");
+export const getStudios = async (categoryId = null) => {
+  const query = categoryId ? `?category_id=${categoryId}` : "";
+  return req(`/studios${query}`);
+};
 
 /**
  * GET /api/studios/:id
@@ -88,5 +92,11 @@ export const createReservation = async (data) => req("/reservations", {
  * @returns { data: Offer[] }
  */
 export const getOffers = async () => req("/offers");
+
+/**
+ * GET /api/categories
+ * @returns { data: Category[] }
+ */
+export const getCategories = async () => req("/categories");
 
 // ── Removed Mock data (now using backend) ─────────────
