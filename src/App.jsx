@@ -23,6 +23,7 @@ import AdminRoute      from "./components/AdminRoute";
 import AdminDashboard  from "./pages/AdminDashboard";
 import AdminStudioForm from "./pages/AdminStudioForm";
 import AdminUserHistory from "./pages/AdminUserHistory";
+import NotificationsPage from "./pages/NotificationsPage";
 import { getUser }     from "./api/authApi";
 import { getFavorites, addFavorite, removeFavorite } from "./api/favoriteApi";
 import { getNotifications, markRead, markAllRead } from "./api/notificationApi";
@@ -320,6 +321,7 @@ function AppContent() {
               <Route path="/register" element={<Register />} />
               
               <Route path="/dashboard/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
               <Route path="/dashboard/reservations/:bookingReference" element={<ProtectedRoute><ReservationDetailsPage /></ProtectedRoute>} />
               
               <Route element={<AdminRoute />}>

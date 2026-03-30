@@ -3,6 +3,7 @@ import { Link, NavLink } from "react-router-dom";
 import { useAuth } from "../App"; // Import useAuth context
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "./LanguageSwitcher";
+import NotificationDropdown from "./NotificationDropdown";
 import { FiUser, FiChevronDown, FiLogOut, FiSettings, FiGrid } from "react-icons/fi";
 
 /**
@@ -91,6 +92,8 @@ export default function Navbar({ onBook, onAuth }) {
           {/* CTA + Burger */}
           <div style={{ display: "flex", alignItems: "center", gap: "0.6rem" }}>
             
+            {isAuthenticated && <NotificationDropdown />}
+
             {!isAuthenticated ? (
               <button
                 className="btn btn-outline btn-sm nav-desktop"
@@ -176,6 +179,7 @@ export default function Navbar({ onBook, onAuth }) {
 
             {/* Mobile burger */}
             <div className="nav-mobile" style={{ display: "flex", alignItems: "center", gap: "0.5rem" }}>
+              {isAuthenticated && <NotificationDropdown />}
               <LanguageSwitcher />
               <button
                 onClick={() => setMenuOpen(o => !o)}

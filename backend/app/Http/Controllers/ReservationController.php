@@ -157,6 +157,7 @@ class ReservationController extends Controller
 
             return [
                 "studio" => $reservation->studio->name ?? 'Unknown Studio',
+                "studio_image" => $reservation->studio->image ?? 'https://images.unsplash.com/photo-1598488035139-bdbb2231ce04?w=600&q=75',
                 "date" => $reservation->date,
                 "time_slot" => $reservation->time_slot,
                 "status" => $reservation->status,
@@ -186,6 +187,16 @@ class ReservationController extends Controller
         foreach ($reservations as $reservation) {
             $reservation->status = 'cancelled';
             $reservation->save();
+        }
+
+        // Notify admins about the cancellation
+        $adminUsers = \App\Models\User::where('is_admin', true)->get();
+        foreach ($adminUsers as $admin) {
+            \App\Models\Notification::create([
+                'user_id' => $admin->id,
+                'type' => 'reservation_cancelled',
+                'message' => "Reservation (Ref: {$id}) has been cancelled by the user.",
+            ]);
         }
 
         return response()->json(['message' => 'Reservation cancelled successfully.', 'data' => $reservations->first()]);
