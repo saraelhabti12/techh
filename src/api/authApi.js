@@ -84,6 +84,13 @@ export const getUser = async () => {
   return request("/user");
 };
 
+export const updateUser = async (userData) => {
+  return request("/user", {
+    method: "PUT",
+    body: JSON.stringify(userData),
+  });
+};
+
 export const getMyReservations = async () => {
   return request("/my-reservations");
 };

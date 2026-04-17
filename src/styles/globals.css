@@ -375,6 +375,148 @@ p, .text-base { font-size: 1rem; font-weight: 400; line-height: 1.6; color: var(
 
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 @keyframes fadeUp { from { opacity: 0; transform: translateY(20px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes slideInRight { from { opacity: 0; transform: translateX(30px); } to { opacity: 1; transform: translateX(0); } }
+@keyframes slideOutLeft { from { opacity: 1; transform: translateX(0); } to { opacity: 0; transform: translateX(-30px); } }
+@keyframes pulseGlow { 0%, 100% { box-shadow: 0 0 0 0 rgba(255, 15, 155, 0.4); } 50% { box-shadow: 0 0 0 8px rgba(255, 15, 155, 0); } }
+@keyframes ripple { 0% { transform: scale(0); opacity: 1; } 100% { transform: scale(4); opacity: 0; } }
+@keyframes numberCount { from { transform: scale(1); } to { transform: scale(1.05); } }
+@keyframes cardHover { from { transform: scale(1); box-shadow: var(--shadow-sm); } to { transform: scale(1.03); box-shadow: var(--shadow-lg); } }
+@keyframes buttonRise { from { transform: translateY(0); } to { transform: translateY(-3px); } }
+@keyframes inputFocus { 0% { border-color: var(--gray-200); box-shadow: none; } 100% { border-color: var(--pink-400); box-shadow: 0 0 0 4px rgba(255, 15, 155, 0.1); } }
+
+/* ── PREMIUM ANIMATIONS ────────────────────────────────────── */
+.animate-step-enter { animation: slideInRight 0.4s var(--ease); }
+.animate-step-exit { animation: slideOutLeft 0.3s var(--ease); }
+.animate-fadeUp { animation: fadeUp 0.5s var(--ease); }
+.animate-fadeIn { animation: fadeIn 0.4s var(--ease); }
+
+.booking-card {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  border-radius: 20px;
+  cursor: pointer;
+  position: relative;
+  overflow: hidden;
+}
+
+.booking-card:hover {
+  animation: cardHover 0.3s ease forwards;
+}
+
+.booking-card.selected {
+  border: 2px solid var(--pink-500);
+  animation: pulseGlow 2s infinite;
+}
+
+.booking-card.selected::before {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  border: 2px solid var(--pink-500);
+  border-radius: 18px;
+  animation: pulseGlow 2s infinite;
+  pointer-events: none;
+}
+
+.btn-ripple {
+  position: relative;
+  overflow: hidden;
+}
+
+.btn-ripple::before {
+  content: '';
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  width: 0;
+  height: 0;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.5);
+  transform: translate(-50%, -50%);
+  transition: width 0.6s, height 0.6s;
+}
+
+.btn-ripple:active::before {
+  width: 300px;
+  height: 300px;
+  animation: ripple 0.6s ease-out;
+}
+
+.btn-rise:hover:not(:disabled) {
+  animation: buttonRise 0.2s ease forwards;
+}
+
+.field-input-animated {
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.field-input-animated:focus {
+  animation: inputFocus 0.3s ease forwards;
+}
+
+.number-animate {
+  display: inline-block;
+  transition: transform 0.2s ease;
+}
+
+.number-animate.updated {
+  animation: numberCount 0.3s ease;
+}
+
+/* Mobile responsive transitions */
+@media (max-width: 768px) {
+  .animate-step-enter { animation-duration: 0.3s; }
+  .animate-step-exit { animation-duration: 0.2s; }
+  .booking-card:hover { animation: none; transform: none; }
+  .btn-ripple:active::before { animation-duration: 0.4s; }
+}
+
+/* ── FORMS & INPUTS ────────────────────────────────────────── */
+.field {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  margin-bottom: 1rem;
+}
+
+.field-label {
+  font-size: 0.875rem;
+  font-weight: 700;
+  color: var(--gray-700);
+}
+
+.field-input {
+  width: 100%;
+  padding: 0.75rem 1rem;
+  font-size: 0.95rem;
+  background: var(--white);
+  border: 1.5px solid var(--gray-200);
+  border-radius: 12px;
+  color: var(--gray-900);
+  transition: all 0.2s var(--ease);
+}
+
+.field-input::placeholder {
+  color: var(--gray-400);
+}
+
+.field-input:hover {
+  border-color: var(--gray-300);
+}
+
+.field-input:focus {
+  border-color: var(--pink-400);
+  background: var(--white);
+  box-shadow: 0 0 0 4px rgba(255, 15, 155, 0.1);
+}
+
+.field-input:disabled {
+  background: var(--gray-50);
+  cursor: not-allowed;
+  opacity: 0.7;
+}
 
 /* ── RESPONSIVE ────────────────────────────────────────────── */
 @media (max-width: 1024px) { .container { padding: 0 20px; } }

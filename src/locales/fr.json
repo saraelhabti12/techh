@@ -139,7 +139,8 @@
     "Microphone": "Microphone",
     "Lens": "Objectifs",
     "Stabilizers": "Stabilisateurs",
-    "Drone": "Drone"
+    "Drone": "Drone",
+    "Decoration": "Décoration"
   },
   "team_list": {
     "Photographer": "Photographe",
@@ -154,5 +155,28 @@
     "select_studio": "Veuillez sélectionner au moins un studio.",
     "select_slot": "Veuillez sélectionner au moins un créneau horaire.",
     "booking_failed": "La réservation a échoué."
-  }
+  },
+  "per_hour": "Par Heure",
+  "per_period": "Par Période",
+  "per_day": "Par Jour",
+  "booking_mode": "Mode de réservation",
+  "add_day": "Ajouter ce jour",
+  "add_another_day": "Ajouter un autre jour",
+  "project_details": "Détails du projet",
+  "project_name": "Nom du projet",
+  "project_name_placeholder": "ex: Séance photo mode d'été",
+  "project_description": "Description du projet",
+  "project_description_placeholder": "Parlez-nous de votre projet...",
+  "additional_services_notice": "Les tarifs pour les services supplémentaires (équipe, équipement) seront discutés avec vous après la réservation.",
+  "booking_summary": "Résumé de réservation",
+  "selected_equipments": "Équipements sélectionnés",
+  "price_breakdown": "Détails du prix",
+  "total_amount": "Montant total",
+  "taxes_included": "Taxes incluses",
+  "studio_price": "Prix studio",
+  "equipment_price": "Prix équipement",
+  "dh": "DH",
+  "select_date_from_calendar": "Sélectionnez une date dans le calendrier",
+  "full_day_booking_desc": "Réservation journée complète de 08:00 à 23:59",
+  "services": "Services"
 }

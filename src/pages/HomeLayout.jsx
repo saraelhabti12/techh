@@ -35,8 +35,7 @@ export default function HomeLayout({
   // 1. Sync Prop Category -> Local Filters & Show Cards
   useEffect(() => {
     if (selectedCategory) {
-      const filterCat = selectedCategory === 'booking' ? '' : selectedCategory;
-      setFilters(prev => ({ ...prev, category: filterCat }));
+      setFilters(prev => ({ ...prev, category: selectedCategory }));
       setShowCards(true);
       
       // Small delay to ensure DOM is ready before scrolling
@@ -94,7 +93,7 @@ export default function HomeLayout({
         <div ref={cardsRef} className={`studio-results-wrapper ${showCards ? 'visible' : 'hidden'}`}>
           <div className="results-header" style={{ marginBottom: '40px' }}>
              <h2 className="font-display" style={{ fontSize: '2.5rem', fontWeight: '800', borderBottom: '2px solid var(--gray-200)', paddingBottom: '1rem' }}>
-              {selectedCategory === 'booking' ? 'All Studios' : 
+              {selectedCategory === 'booking' ? 'Booking Service' : 
                selectedCategory ? `${selectedCategory.charAt(0).toUpperCase() + selectedCategory.slice(1)} Spaces` : 
                'Studios'}
              </h2>

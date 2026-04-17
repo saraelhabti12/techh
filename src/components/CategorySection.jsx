@@ -154,3 +154,4 @@ export default function CategorySection({ selectedCategory, onSelectCategory, mo
     </div>
   );
 }
+

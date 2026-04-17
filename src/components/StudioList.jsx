@@ -35,6 +35,7 @@ export default function StudioList({ selectedDate, selectedCategory, availabilit
 
   useEffect(() => {
     setLoading(true);
+    // Always fetch all studios to allow flexible client-side filtering (by category, booking, etc.)
     getStudios()
       .then(res => {
         setStudios(res?.data || res || []);
@@ -55,24 +56,41 @@ export default function StudioList({ selectedDate, selectedCategory, availabilit
     const { search, category, minPrice, maxPrice, availableOnly } = activeFilters;
 
     return studios.filter(s => {
-      // Category filtering using the new dynamic structure
-      if (category) {
-        const matchesCategory = s.category?.name === category || s.category_name === category;
-        if (!matchesCategory) return false;
+      // 1. Context-based Filtering (Booking Flow vs Normal Categories)
+      const currentCat = (category || '').toLowerCase();
+      
+      if (currentCat === 'booking') {
+        // ONLY these 3 studios for the booking flow
+        // Check for English and French variants + keywords to be very robust
+        const name = (s.name || '').toLowerCase();
+        
+        // Use extremely permissive keyword matching to avoid locale/typo issues
+        const isFullAccess = name.includes('full') || name.includes('accès');
+        const isWhite      = name.includes('white') || name.includes('blanc');
+        const isGirly      = name.includes('girly');
+        
+        if (!isFullAccess && !isWhite && !isGirly) return false;
+      } else if (category) {
+        // Normal category filtering for the homepage/sidebar
+        const studioCatName = (s.category?.name || s.category_name || '').toLowerCase();
+        const filterCatName = category.toLowerCase();
+        
+        // Match by name (case-insensitive)
+        if (studioCatName !== filterCatName) return false;
       }
 
-      // Search
+      // 2. Search Filter
       if (search && !s.name.toLowerCase().includes(search.toLowerCase()) && 
           !s.tagline.toLowerCase().includes(search.toLowerCase())) {
         return false;
       }
 
-      // Price
+      // 3. Price Filter
       const price = avail(s.id)?.price || s.price_per_hour;
       if (minPrice && price < parseFloat(minPrice)) return false;
       if (maxPrice && price > parseFloat(maxPrice)) return false;
 
-      // Availability
+      // 4. Availability Filter
       if (availableOnly) {
         const status = avail(s.id)?.status || "available";
         if (status !== "available") return false;

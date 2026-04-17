@@ -24,6 +24,7 @@ import AdminDashboard  from "./pages/AdminDashboard";
 import AdminStudioForm from "./pages/AdminStudioForm";
 import AdminUserHistory from "./pages/AdminUserHistory";
 import NotificationsPage from "./pages/NotificationsPage";
+import FavoritesPage from "./pages/FavoritesPage";
 import { getUser }     from "./api/authApi";
 import { getFavorites, addFavorite, removeFavorite } from "./api/favoriteApi";
 import { getNotifications, markRead, markAllRead } from "./api/notificationApi";
@@ -279,6 +280,7 @@ function AppContent() {
   }, [location, showReservation, navigate, openBook]);
 
   const isHomePage = location.pathname === '/';
+  const hideSidebar = ['/login', '/register', '/admin'].some(path => location.pathname.startsWith(path));
 
   return (
     <div className="app-container">
@@ -288,16 +290,18 @@ function AppContent() {
       
       <div className="app-layout">
         {/* GLOBAL SIDEBAR */}
-        <Sidebar 
-          isExpanded={isSidebarExpanded}
-          onToggle={() => setIsSidebarExpanded(!isSidebarExpanded)}
-          selectedDate={selectedDate}
-          onSelectDate={setSelectedDate}
-          onAvailabilityLoad={setAvailability}
-          selectedCategory={selectedCategory}
-          onSelectCategory={setSelectedCategory}
-          showCards={isHomePage}
-        />
+        {!hideSidebar && (
+          <Sidebar 
+            isExpanded={isSidebarExpanded}
+            onToggle={() => setIsSidebarExpanded(!isSidebarExpanded)}
+            selectedDate={selectedDate}
+            onSelectDate={setSelectedDate}
+            onAvailabilityLoad={setAvailability}
+            selectedCategory={selectedCategory}
+            onSelectCategory={setSelectedCategory}
+            showCards={isHomePage}
+          />
+        )}
 
         <div className="main-content-wrapper">
           <div className="page-content">
@@ -321,6 +325,7 @@ function AppContent() {
               <Route path="/register" element={<Register />} />
               
               <Route path="/dashboard/*" element={<ProtectedRoute><Dashboard /></ProtectedRoute>} />
+              <Route path="/favorites" element={<ProtectedRoute><FavoritesPage openBook={openBook} /></ProtectedRoute>} />
               <Route path="/notifications" element={<ProtectedRoute><NotificationsPage /></ProtectedRoute>} />
               <Route path="/dashboard/reservations/:bookingReference" element={<ProtectedRoute><ReservationDetailsPage /></ProtectedRoute>} />
               

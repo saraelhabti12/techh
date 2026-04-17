@@ -142,7 +142,8 @@
     "Microphone": "Microphone",
     "Lens": "Lens",
     "Stabilizers": "Stabilizers",
-    "Drone": "Drone"
+    "Drone": "Drone",
+    "Decoration": "Decoration"
   },
   "team_list": {
     "Photographer": "Photographer",
@@ -157,5 +158,28 @@
     "select_studio": "Please select at least one studio.",
     "select_slot": "Please select at least one time slot.",
     "booking_failed": "Booking failed."
-  }
+  },
+  "per_hour": "Per Hour",
+  "per_period": "Per Period",
+  "per_day": "Per Day",
+  "booking_mode": "Booking Mode",
+  "add_day": "Add this day",
+  "add_another_day": "Add another day",
+  "project_details": "Project Details",
+  "project_name": "Project Name",
+  "project_name_placeholder": "e.g., Summer Fashion Shoot",
+  "project_description": "Project Description",
+  "project_description_placeholder": "Tell us about your project...",
+  "additional_services_notice": "Pricing for additional services (team, equipment) will be discussed with you after reservation.",
+  "booking_summary": "Booking Summary",
+  "selected_equipments": "Selected Equipments",
+  "price_breakdown": "Price Breakdown",
+  "total_amount": "Total Amount",
+  "taxes_included": "Taxes included",
+  "studio_price": "Studio Price",
+  "equipment_price": "Equipment Price",
+  "dh": "DH",
+  "select_date_from_calendar": "Select a date from the calendar",
+  "full_day_booking_desc": "Full day booking from 08:00 to 23:59",
+  "services": "Services"
 }

@@ -41,7 +41,16 @@ class ReservationController extends Controller
                 'total_price' => 'required|numeric',
                 'service_type' => 'nullable|string',
                 'equipment' => 'nullable|array',
-                'team' => 'nullable|array'
+                'team' => 'nullable|array',
+                'booking_mode' => 'nullable|string',
+                'location_type' => 'nullable|string',
+                'selected_offers' => 'nullable|array',
+                'custom_theme' => 'nullable|boolean',
+                'package_type' => 'nullable|string',
+                'theme_description' => 'nullable|string',
+                'category_name' => 'nullable|string',
+                'project_name' => 'nullable|string',
+                'project_description' => 'nullable|string',
             ]);
 
             if (!auth()->check()) {
@@ -106,7 +115,18 @@ class ReservationController extends Controller
                 $adminUsers = \App\Models\User::where('is_admin', true)->get();
                 $adminEmails = $adminUsers->pluck('email');
                 if ($adminEmails->isNotEmpty()) {
-                    Mail::to($adminEmails)->send(new NewReservationMail($createdReservations));
+                    $extraData = [
+                        'booking_mode' => $validated['booking_mode'] ?? null,
+                        'location_type' => $validated['location_type'] ?? null,
+                        'selected_offers' => $validated['selected_offers'] ?? [],
+                        'custom_theme' => $validated['custom_theme'] ?? false,
+                        'package_type' => $validated['package_type'] ?? 'standard',
+                        'theme_description' => $validated['theme_description'] ?? null,
+                        'category_name' => $validated['category_name'] ?? 'General',
+                        'project_name' => $validated['project_name'] ?? null,
+                        'project_description' => $validated['project_description'] ?? null,
+                    ];
+                    Mail::to($adminEmails)->send(new NewReservationMail($createdReservations, $extraData));
                 }
 
                 // Create notifications for admins

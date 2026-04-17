@@ -4,7 +4,7 @@ import { useAuth } from "../App"; // Import useAuth context
 import { useTranslation } from "react-i18next";
 import LanguageSwitcher from "./LanguageSwitcher";
 import NotificationDropdown from "./NotificationDropdown";
-import { FiUser, FiChevronDown, FiLogOut, FiSettings, FiGrid } from "react-icons/fi";
+import { FiUser, FiChevronDown, FiLogOut, FiSettings, FiGrid, FiHeart, FiBell } from "react-icons/fi";
 
 /**
  * Navbar
@@ -152,9 +152,14 @@ export default function Navbar({ onBook, onAuth }) {
                       Dashboard
                     </Link>
                     
-                    <Link to="/dashboard/profile" className="dropdown-item" onClick={() => setUserMenuOpen(false)}>
-                      <FiSettings size={16} />
-                      Profile Settings
+                    <Link to="/favorites" className="dropdown-item" onClick={() => setUserMenuOpen(false)}>
+                      <FiHeart size={16} />
+                      Favorites
+                    </Link>
+
+                    <Link to="/notifications" className="dropdown-item" onClick={() => setUserMenuOpen(false)}>
+                      <FiBell size={16} />
+                      Notifications
                     </Link>
                     
                     <button 
@@ -243,12 +248,20 @@ export default function Navbar({ onBook, onAuth }) {
                   Dashboard
                 </NavLink>
                 <NavLink
-                  to="/dashboard/profile"
+                  to="/favorites"
                   className={({ isActive }) => `nav-mobile-link ${isActive ? 'active' : ''}`}
                   onClick={() => handleNavLinkClick()}
                   style={{ fontSize: '0.9rem', padding: '0.75rem 0' }}
                 >
-                  Profile Settings
+                  Favorites
+                </NavLink>
+                <NavLink
+                  to="/notifications"
+                  className={({ isActive }) => `nav-mobile-link ${isActive ? 'active' : ''}`}
+                  onClick={() => handleNavLinkClick()}
+                  style={{ fontSize: '0.9rem', padding: '0.75rem 0' }}
+                >
+                  Notifications
                 </NavLink>
                 <button
                   onClick={() => { logoutUser(); setMenuOpen(false); }}

@@ -13,13 +13,15 @@ class NewReservationMail extends Mailable
     use Queueable, SerializesModels;
 
     public $reservations;
+    public $extraData;
 
     /**
      * Create a new message instance.
      */
-    public function __construct($reservations)
+    public function __construct($reservations, $extraData = [])
     {
         $this->reservations = $reservations;
+        $this->extraData = $extraData;
     }
 
     /**
@@ -28,7 +30,7 @@ class NewReservationMail extends Mailable
     public function envelope(): Envelope
     {
         return new Envelope(
-            subject: 'New Reservation - TechStudio',
+            subject: 'New Reservation Received - TechStudio',
         );
     }
 

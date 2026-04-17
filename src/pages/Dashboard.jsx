@@ -110,8 +110,6 @@ const Dashboard = () => {
                     </>
                 } />
                 <Route path="profile" element={<ProfileCard />} />
-                <Route path="favorites" element={<FavoriteStudios />} />
-                <Route path="notifications" element={<NotificationsPanel />} />
             </Routes>
 
             {/* Render all sections on the root dashboard path, otherwise route content */}

@@ -20,12 +20,6 @@ const WelcomeHeader = ({ userName }) => {
                 >
                     <FaPlus /> {t('reserve_studio')}
                 </button>
-                <button
-                    onClick={() => navigate('/dashboard/profile')}
-                    className="btn btn-outline btn-md"
-                >
-                    <FaUserEdit /> {t('edit_profile')}
-                </button>
             </div>
         </div>
     );

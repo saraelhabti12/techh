@@ -3,6 +3,19 @@
   display: flex;
   min-height: 100vh;
   background: var(--gray-50);
+  width: 100%;
+}
+
+.main-dashboard-layout.full-width {
+  display: flex;
+  flex: 1;
+}
+
+.main-dashboard-layout.full-width .dashboard-main {
+  flex: 1;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 2.5rem 2rem;
 }
 
 .sidebar {
@@ -13,8 +26,8 @@
   display: flex;
   flex-direction: column;
   position: sticky;
-  top: 0;
-  height: 100vh;
+  top: 80px; /* Aligned with navbar height */
+  height: calc(100vh - 80px);
   z-index: 100;
 }
 

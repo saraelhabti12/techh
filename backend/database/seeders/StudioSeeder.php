@@ -22,7 +22,7 @@ class StudioSeeder extends Seeder
             ['name' => 'Shooting', 'icon' => '📹', 'color' => '#5e1da8'],
             ['name' => 'Girly Space', 'icon' => '✨', 'color' => '#ff7096'],
             ['name' => 'Birthday', 'icon' => '🎉', 'color' => '#f472b6'],
-        ];
+        ];  
 
         $createdCategories = [];
         foreach ($categories as $cat) {
@@ -152,7 +152,7 @@ class StudioSeeder extends Seeder
                 'features_fr' => ["Cyclo Blanc 6x6m sans couture", "Flashs Godox AD600 Pro", "Station Capture One"],
                 'price_per_hour' => 100, 
                 'color' => "#5e1da8",
-                'image' => "https://images.unsplash.com/photo-1558618666-fcd25c85cd64?w=800&q=75",
+                 'image' => 'images/white-screen-.jpg',
                 'price' => 100,
             ],
             [

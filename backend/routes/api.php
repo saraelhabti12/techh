@@ -31,6 +31,7 @@ Route::post('/login', [AuthController::class, 'login']);
 Route::middleware('auth:sanctum')->group(function () {
     Route::post('/logout', [AuthController::class, 'logout']);
     Route::get('/user', [AuthController::class, 'user']);
+    Route::put('/user', [AuthController::class, 'update']); // Added profile update route
 
     Route::post('/reservations', [ReservationController::class, 'store']);
     Route::get('/my-reservations', [ReservationController::class, 'myReservations']);

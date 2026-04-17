@@ -7,7 +7,7 @@ const carouselItems = [
     id: 1,
     name: 'Podcast Studio',
     price: '300 MAD',
-    image: 'https://images.unsplash.com/photo-1590602847861-f357a9332bbc?auto=format&fit=crop&q=80&w=800',
+    image: ' /Users/techweb/Downloads/done/elafiya28-2.jpg',
   },
   {
     id: 2,
